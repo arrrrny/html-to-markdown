@@ -81,5 +81,5 @@
   },
   "minimum-stability": "stable",
   "prefer-stable": true,
-  "version": "1.8.0-rc.9"
+  "version": "3.4.0-rc.11"
 }
