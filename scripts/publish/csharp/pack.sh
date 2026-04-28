@@ -5,4 +5,4 @@ if [[ -d "dist/csharp-ffi" ]]; then
   scripts/publish/csharp/stage-ffi.sh "dist/csharp-ffi" "packages/csharp/HtmlToMarkdown"
 fi
 
-dotnet pack packages/csharp/HtmlToMarkdown/HtmlToMarkdown.csproj --configuration Release --output artifacts/csharp
+dotnet pack packages/csharp/HtmlToMarkdown.csproj --configuration Release --output artifacts/csharp
