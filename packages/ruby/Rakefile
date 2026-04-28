@@ -5,7 +5,7 @@ Bundler::GemHelper.install_tasks name: 'html-to-markdown'
 require 'rake/extensiontask'
 require 'rspec/core/rake_task'
 
-GEMSPEC = Gem::Specification.load(File.expand_path('html-to-markdown.gemspec', __dir__))
+GEMSPEC = Gem::Specification.load(File.expand_path('html_to_markdown.gemspec', __dir__))
 
 Rake::ExtensionTask.new('html_to_markdown_rb', GEMSPEC) do |ext|
   ext.lib_dir = 'lib'

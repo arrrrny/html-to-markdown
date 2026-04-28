@@ -317,6 +317,8 @@ jobs:
           package-dir: packages/python
           cibw-before-build-linux: >
             yum install -y openssl-devel &&
+            (test -x /usr/bin/aarch64-linux-gnu-gcc ||
+              ln -sf "$(command -v gcc)" /usr/local/bin/aarch64-linux-gnu-gcc 2>/dev/null || true) &&
             pip install maturin uv &&
             source ~/.cargo/env &&
             python scripts/prepare_wheel.py
