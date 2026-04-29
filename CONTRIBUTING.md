@@ -377,9 +377,8 @@ Verify all distributions are published:
 
 - **Rust**: <https://crates.io/crates/html-to-markdown-rs>
 - **Python**: <https://pypi.org/project/html-to-markdown/>
-- **npm (main)**: <https://www.npmjs.com/package/html-to-markdown>
-- **npm (node)**: <https://www.npmjs.com/package/html-to-markdown-node>
-- **npm (wasm)**: <https://www.npmjs.com/package/html-to-markdown-wasm>
+- **npm (main)**: <https://www.npmjs.com/package/@kreuzberg/html-to-markdown>
+- **npm (wasm)**: <https://www.npmjs.com/package/@kreuzberg/html-to-markdown-wasm>
 - **Homebrew**: <https://github.com/kreuzberg-dev/homebrew-tap>
 - **GitHub**: <https://github.com/kreuzberg-dev/html-to-markdown/releases>
 

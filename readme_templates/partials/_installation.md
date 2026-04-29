@@ -52,7 +52,7 @@ pie install kreuzberg-dev/html-to-markdown
 Or use Composer (requires ext-html_to_markdown):
 
 ```bash
-composer require goldziher/html-to-markdown
+composer require kreuzberg-dev/html-to-markdown
 ```
 
 {% elif language == 'go' %}

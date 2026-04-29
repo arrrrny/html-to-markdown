@@ -11,7 +11,7 @@ Install **html-to-markdown** for your language using the commands below. Each bi
 | TypeScript / Node.js | Node.js 18 | `@kreuzberg/html-to-markdown` on npm |
 | Go | 1.26 | `github.com/kreuzberg-dev/html-to-markdown/packages/go/v3` |
 | Ruby | 3.2 | `html-to-markdown` on RubyGems |
-| PHP | 8.1 | `kreuzberg/html-to-markdown` on Packagist |
+| PHP | 8.2 | `kreuzberg-dev/html-to-markdown` on Packagist |
 | Java | 22 | `dev.kreuzberg:html-to-markdown` on Maven Central |
 | C# | .NET Standard 2.0 | `KreuzbergDev.HtmlToMarkdown` on NuGet |
 | Elixir | 1.19 | `html_to_markdown` on Hex |
@@ -168,7 +168,7 @@ Install **html-to-markdown** for your language using the commands below. Each bi
 === "PHP"
 
     ```bash
-    composer require kreuzberg/html-to-markdown
+    composer require kreuzberg-dev/html-to-markdown
     ```
 
     **Verify:**
@@ -184,7 +184,7 @@ Install **html-to-markdown** for your language using the commands below. Each bi
     // # Hello
     ```
 
-    Requires PHP 8.1+. The package ships precompiled extensions for common PHP versions. If no prebuilt extension matches, Composer will compile from source via `cargo`.
+    Requires PHP 8.2+. The package ships precompiled extensions for common PHP versions. If no prebuilt extension matches, Composer will compile from source via `cargo`.
 
 === "Java"
 
