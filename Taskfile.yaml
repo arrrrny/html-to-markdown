@@ -152,7 +152,6 @@ tasks:
   fmt:
     desc: "Format all code"
     cmds:
-      - cargo fmt --all
       - alef fmt
 
   format:
