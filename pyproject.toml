@@ -106,6 +106,8 @@ explicit_package_bases = true
 mypy_path = [ "packages/python" ]
 exclude = [
   "^crates/",
+  "^e2e/",
+  "^test_apps/",
   "^packages/typescript/",
   "^packages/ruby/",
   "^scripts/",

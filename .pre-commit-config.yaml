@@ -150,6 +150,8 @@ repos:
         exclude: ^(e2e/|test_apps/)
       - id: golangci-lint
         exclude: ^(e2e/|test_apps/)
+        env:
+          KREUZBERG_GO_MOD_DIRS: "packages/go"
       - id: govulncheck
         exclude: ^(e2e/|test_apps/)
       - id: rubocop
@@ -165,7 +167,7 @@ repos:
       - id: php-cs-fixer
         files: ^packages/php/.*\.php$
       - id: phpstan
-        files: ^packages/php/.*\.php$
+        files: ^packages/php/(src|tests|stubs)/.*\.php$
         args: ["analyse", "--no-progress", "--configuration", "packages/php/phpstan.neon"]
       - id: mix-format
         files: ^packages/elixir/

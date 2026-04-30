@@ -226,7 +226,13 @@ tasks:
   alef:generate:
     desc: "Run full alef pipeline (generate + stubs + scaffold + readme + sync + e2e) and `alef docs` (docs/reference for Zensical)"
     cmds:
-      - alef all
+      - alef generate
+      - alef stubs
+      - alef scaffold
+      - alef readme
+      - alef sync-versions
+      - alef e2e generate
+      - alef e2e generate --registry
       - alef docs
 
   alef:verify:
@@ -396,6 +402,17 @@ tasks:
     dir: packages/r
     cmds:
       - Rscript -e 'devtools::test()'
+
+  # === test_apps aggregators (mirrors lllm naming convention) ===
+  test-apps:smoke:
+    desc: "Run all test_app smoke tests (alias for e2e:smoke:all)"
+    cmds:
+      - task: e2e:smoke:all
+
+  test-apps:comprehensive:
+    desc: "Run all test_app comprehensive tests (alias for e2e:test:all)"
+    cmds:
+      - task: e2e:test:all
 
   # === Demo ===
   build:demo:

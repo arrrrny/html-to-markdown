@@ -1,21 +1,12 @@
 {
   "mcpServers": {
-    "ai-rulez": {
-      "args": [
-        "mcp"
-      ],
-      "command": "ai-rulez",
-      "disabled": false,
-      "transport": "stdio"
-    },
     "playwright": {
       "args": [
         "-y",
-        "@playwright/mcp"
+        "@playwright/mcp@latest"
       ],
       "command": "npx",
-      "disabled": false,
-      "transport": "stdio"
+      "disabled": false
     }
   }
 }

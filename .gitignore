@@ -160,6 +160,7 @@ pkg/
 .github/commands/
 .github/copilot-instructions.md
 .github/skills/
+.mcp.json
 AGENTS.md
 CLAUDE.md
 # END ai-rulez

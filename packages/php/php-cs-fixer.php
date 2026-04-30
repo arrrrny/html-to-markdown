@@ -17,7 +17,7 @@ $finder = Finder::create()
     ->path('#^tests/#')
     ->notName('*.blade.php');
 
-return (new Config())
+return new Config()
     ->setRiskyAllowed(true)
     ->setRules([
         '@PSR12' => true,

@@ -1,16 +1,17 @@
 {
-  "name": "kreuzberg/e2e-php",
+  "name": "kreuzberg-dev/e2e-php",
   "description": "E2e tests for PHP bindings",
   "type": "project",
   "require": {
     "kreuzberg-dev/html-to-markdown-rs": ">=3.2.0"
   },
   "require-dev": {
-    "phpunit/phpunit": "^13.1"
+    "phpunit/phpunit": "^13.1",
+    "guzzlehttp/guzzle": "^7.0"
   },
   "autoload-dev": {
     "psr-4": {
-      "Kreuzberg\\E2e\\": "tests/"
+      "Html\\To\\Markdown\\Rs\\E2e\\": "tests/"
     }
   }
 }
