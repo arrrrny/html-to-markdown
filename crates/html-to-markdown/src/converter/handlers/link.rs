@@ -8,6 +8,7 @@
 //! - Visitor callback integration
 //! - Link metadata collection
 
+#[cfg(any(feature = "metadata", feature = "visitor"))]
 use std::collections::BTreeMap;
 
 use crate::converter::Context;

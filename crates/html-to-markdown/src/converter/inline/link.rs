@@ -14,6 +14,7 @@ use crate::converter::utility::content::collect_tag_attributes;
 use crate::converter::utility::content::{collect_link_label_text, escape_link_label, normalize_link_label};
 use crate::converter::utility::preprocessing::sanitize_markdown_url;
 use crate::options::ConversionOptions;
+#[cfg(any(feature = "metadata", feature = "visitor"))]
 use std::collections::BTreeMap;
 use tl::{NodeHandle, Parser};
 

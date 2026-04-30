@@ -8,7 +8,9 @@
 
 use crate::converter::media::svg::serialize_element;
 use crate::options::ConversionOptions;
-use crate::text::{decode_html_entities, escape};
+#[cfg(feature = "metadata")]
+use crate::text::decode_html_entities;
+use crate::text::escape;
 use tl::{NodeHandle, Parser};
 
 // Type aliases for Context and DomContext to avoid circular imports
@@ -125,6 +127,7 @@ fn handle_head(
 ///
 /// Script elements are processed to extract JSON-LD structured data when
 /// the type is "application/ld+json" and metadata collection is enabled.
+#[cfg_attr(not(feature = "metadata"), allow(unused_variables))]
 fn handle_script(
     node_handle: &NodeHandle,
     parser: &Parser,

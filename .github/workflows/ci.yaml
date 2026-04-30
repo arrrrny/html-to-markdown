@@ -204,6 +204,16 @@ jobs:
         run: task rust:lint:check
         shell: bash
 
+      - name: Check feature flags (html-to-markdown)
+        shell: bash
+        env:
+          RUSTFLAGS: "-D warnings"
+        run: |
+          cargo check -p html-to-markdown-rs --no-default-features
+          cargo check -p html-to-markdown-rs --no-default-features --features visitor
+          cargo check -p html-to-markdown-rs --no-default-features --features metadata
+          cargo check -p html-to-markdown-rs --no-default-features --features inline-images
+
   changes:
     name: "Detect Changes"
     runs-on: ubuntu-24.04-arm

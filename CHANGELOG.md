@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Visitor element start/end sequence for hyphenated tags (#331)** — the `repair_with_html5ever` fallback (triggered when input contains custom-element / hyphenated tag names) re-parsed the document under HTML5 semantics, which discard XML-style self-closing on unknown elements. As a result, `<ac:parameter ... />` was treated as an open tag and subsequent siblings nested inside it, breaking the visitor's pre-order/post-order start/end pairing. The repair path now pre-expands XML-style self-closing tags on non-void elements to explicit open+close pairs before the HTML5 parse, so visitor events remain correctly paired for hyphenated/namespaced custom tags.
+
+- **`default-features = false` build broken (#332)** — bare `#[serde(...)]` and `#[derive(Serialize, Deserialize)]` on core types in `src/types/{document,tables,result,warnings}.rs` and `src/options/conversion.rs` are now feature-gated behind `#[cfg_attr(feature = "serde", ...)]`. CI now runs `cargo check --no-default-features` matrix to prevent regressions.
+
 - **Ruby `TypeError` on `convert()` with options** (#334) — `HtmlToMarkdown.convert(html, options)`
   raised `TypeError` on every call that supplied options (including `3.4.0.pre.rc.15`). The Ruby
   wrapper was passing a `ConversionOptions` object to the FFI, but the generated Rust function

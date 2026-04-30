@@ -7,6 +7,7 @@
 //! - Visitor callback integration
 
 use std::borrow::Cow;
+#[cfg(any(feature = "metadata", feature = "visitor"))]
 use std::collections::BTreeMap;
 
 use crate::converter::Context;

@@ -118,7 +118,7 @@ pub struct ConversionOptions {
     /// Invalid selectors are silently skipped at conversion time.
     ///
     /// Example: `vec![".cookie-banner".into(), "#ad-container".into(), "[role='complementary']".into()]`
-    #[serde(default)]
+    #[cfg_attr(any(feature = "serde", feature = "metadata"), serde(default))]
     pub exclude_selectors: Vec<String>,
 }
 

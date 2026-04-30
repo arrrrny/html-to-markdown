@@ -95,7 +95,7 @@ pub use convert_api::{conversion_options_from_json, conversion_options_update_fr
 #[cfg(feature = "metadata")]
 pub use convert_api::metadata_config_from_json;
 
-#[cfg(feature = "inline-images")]
+#[cfg(all(feature = "inline-images", any(feature = "serde", feature = "metadata")))]
 pub use convert_api::inline_image_config_from_json;
 
 // Tests

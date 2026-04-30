@@ -6,7 +6,9 @@
 
 #[cfg(any(feature = "inline-images", feature = "visitor"))]
 use std::cell::RefCell;
-use std::collections::{BTreeMap, HashSet};
+#[cfg(feature = "metadata")]
+use std::collections::BTreeMap;
+use std::collections::HashSet;
 use std::rc::Rc;
 
 #[cfg(feature = "inline-images")]

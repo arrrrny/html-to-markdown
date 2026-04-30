@@ -6,12 +6,26 @@ use std::borrow::Cow;
 
 use crate::error::Result;
 use crate::options::{ConversionOptions, WhitespaceMode};
+
+/// The visitor parameter type accepted by [`convert`].
+///
+/// When the `visitor` feature is enabled, this is the full `VisitorHandle`
+/// (a shared reference-counted dyn `HtmlVisitor`). When the feature is off
+/// it degrades to a unit type so that callers can keep a stable 3-arity
+/// `convert(html, options, None)` call signature regardless of feature flags.
+#[cfg(feature = "visitor")]
+pub type VisitorParam = crate::visitor::VisitorHandle;
+#[cfg(not(feature = "visitor"))]
+pub type VisitorParam = ();
+#[cfg(any(feature = "serde", feature = "metadata", feature = "inline-images"))]
+use crate::ConversionError;
+#[cfg(any(feature = "serde", feature = "metadata"))]
+use crate::ConversionOptionsUpdate;
 use crate::text;
 use crate::types::ConversionResult;
 use crate::validation::{Utf16Encoding, detect_utf16_encoding, validate_input};
-use crate::{ConversionError, ConversionOptionsUpdate};
 
-#[cfg(feature = "inline-images")]
+#[cfg(all(feature = "inline-images", any(feature = "serde", feature = "metadata")))]
 use crate::InlineImageConfig;
 #[cfg(feature = "metadata")]
 use crate::{HtmlMetadata, MetadataConfig};
@@ -40,9 +54,11 @@ use crate::{HtmlMetadata, MetadataConfig};
 pub fn convert(
     html: &str,
     options: Option<ConversionOptions>,
-    #[cfg(feature = "visitor")] visitor: Option<crate::visitor::VisitorHandle>,
+    visitor: Option<VisitorParam>,
 ) -> Result<ConversionResult> {
+    #[cfg(any(feature = "metadata", feature = "inline-images"))]
     use std::cell::RefCell;
+    #[cfg(any(feature = "metadata", feature = "inline-images"))]
     use std::rc::Rc;
 
     let options = options.unwrap_or_default();
@@ -100,10 +116,12 @@ pub fn convert(
             None
         };
 
-    // When the visitor feature is not enabled, there is no visitor parameter.
-    // convert_html_impl expects `Option<()>` in the non-visitor slot.
+    // `convert_html_impl` expects the visitor slot to be `Option<()>` when the visitor
+    // feature is off. We accept `Option<VisitorParam>` (a feature-gated alias) at the
+    // public API — when the feature is off it's `Option<()>`, so `visitor` already has
+    // the right type and we don't need to override it.
     #[cfg(not(feature = "visitor"))]
-    let visitor: Option<()> = None;
+    let _ = visitor.is_some();
 
     // Run the conversion pipeline.
     // Pass structure_collector by value — convert_html_impl will consume it via Rc::try_unwrap

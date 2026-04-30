@@ -2,6 +2,7 @@
 
 use std::collections::HashMap;
 
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use super::tables::TableGrid;
@@ -9,41 +10,44 @@ use super::tables::TableGrid;
 /// A structured document tree representing the semantic content of an HTML document.
 ///
 /// Uses a flat node array with index-based parent/child references for efficient traversal.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct DocumentStructure {
     /// All nodes in document reading order.
     pub nodes: Vec<DocumentNode>,
     /// The source format (always "html" for this crate).
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub source_format: Option<String>,
 }
 
 /// A single node in the document tree.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct DocumentNode {
     /// Deterministic node identifier.
     pub id: String,
     /// The semantic content of this node.
     pub content: NodeContent,
     /// Index of the parent node (None for root nodes).
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub parent: Option<u32>,
     /// Indices of child nodes in reading order.
-    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Vec::is_empty", default))]
     pub children: Vec<u32>,
     /// Inline formatting annotations (bold, italic, links, etc.) with byte offsets into the text.
-    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Vec::is_empty", default))]
     pub annotations: Vec<TextAnnotation>,
     /// Format-specific attributes (e.g. class, id, data-* attributes).
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
     pub attributes: Option<HashMap<String, String>>,
 }
 
 /// The semantic content type of a document node.
 ///
 /// Uses internally tagged representation (`"node_type": "heading"`) for JSON serialization.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(tag = "node_type", rename_all = "snake_case")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(tag = "node_type", rename_all = "snake_case"))]
 pub enum NodeContent {
     /// A heading element (h1-h6).
     Heading {
@@ -75,13 +79,13 @@ pub enum NodeContent {
     /// An image element.
     Image {
         /// Alt text or caption.
-        #[serde(skip_serializing_if = "Option::is_none")]
+        #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
         description: Option<String>,
         /// Image source URL.
-        #[serde(skip_serializing_if = "Option::is_none")]
+        #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
         src: Option<String>,
         /// Index into `ConversionResult.images` when image extraction is enabled.
-        #[serde(skip_serializing_if = "Option::is_none")]
+        #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
         image_index: Option<u32>,
     },
     /// A code block or inline code.
@@ -89,7 +93,7 @@ pub enum NodeContent {
         /// The code text content.
         text: String,
         /// Programming language (from class="language-*" or similar).
-        #[serde(skip_serializing_if = "Option::is_none")]
+        #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
         language: Option<String>,
     },
     /// A block quote container.
@@ -118,13 +122,13 @@ pub enum NodeContent {
     /// A section grouping container (auto-generated from heading hierarchy).
     Group {
         /// Optional section label.
-        #[serde(skip_serializing_if = "Option::is_none")]
+        #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
         label: Option<String>,
         /// The heading level that created this group.
-        #[serde(skip_serializing_if = "Option::is_none")]
+        #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
         heading_level: Option<u8>,
         /// The heading text that created this group.
-        #[serde(skip_serializing_if = "Option::is_none")]
+        #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
         heading_text: Option<String>,
     },
 }
@@ -132,7 +136,8 @@ pub enum NodeContent {
 /// An inline text annotation with byte-range offsets.
 ///
 /// Annotations describe formatting (bold, italic, etc.) and links within a node's text content.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TextAnnotation {
     /// Start byte offset (inclusive) into the parent node's text.
     pub start: u32,
@@ -145,9 +150,9 @@ pub struct TextAnnotation {
 /// The type of an inline text annotation.
 ///
 /// Uses internally tagged representation (`"annotation_type": "bold"`) for JSON serialization.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(tag = "annotation_type", rename_all = "snake_case")]
-#[derive(Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", serde(tag = "annotation_type", rename_all = "snake_case"))]
 pub enum AnnotationKind {
     /// Bold / strong emphasis.
     #[default]
@@ -171,7 +176,7 @@ pub enum AnnotationKind {
         /// The link URL.
         url: String,
         /// Optional link title attribute.
-        #[serde(skip_serializing_if = "Option::is_none")]
+        #[cfg_attr(feature = "serde", serde(skip_serializing_if = "Option::is_none"))]
         title: Option<String>,
     },
 }

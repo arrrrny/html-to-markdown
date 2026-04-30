@@ -1,5 +1,6 @@
 //! The primary result type for HTML conversion and extraction.
 
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use super::document::DocumentStructure;
@@ -20,7 +21,8 @@ use super::warnings::ProcessingWarning;
 /// assert!(result.content.is_some());
 /// assert!(result.warnings.is_empty());
 /// ```
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ConversionResult {
     /// Converted text output (markdown, djot, or plain text).
     ///
@@ -44,7 +46,7 @@ pub struct ConversionResult {
     ///
     /// Populated when `extract_images` is `true` in options.
     #[cfg(feature = "inline-images")]
-    #[serde(skip)]
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub images: Vec<crate::inline_images::InlineImage>,
 
     /// Non-fatal processing warnings.

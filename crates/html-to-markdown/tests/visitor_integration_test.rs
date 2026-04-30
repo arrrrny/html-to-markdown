@@ -1002,3 +1002,97 @@ fn test_element_end_replacement_with_metadata_preserves_subsequent_content() {
         "content after replaced element should not be lost"
     );
 }
+
+/// Regression test for issue #331: visitor receives mismatched start/end events for
+/// hyphenated tag names that contain XML-style self-closing children.
+///
+/// When `<ac:parameter ac:name="foo" />` appears inside a hyphenated custom element, the
+/// `repair_with_html5ever` fallback (triggered because the outer tag contains a hyphen) used
+/// to re-parse with HTML5 semantics.  HTML5 does NOT honour XML-style self-closing on unknown
+/// elements, so `<ac:parameter ... />` was treated as an open tag and subsequent siblings were
+/// nested inside it.  That caused `visit_element_start("ac:parameter")` for "foo" to be
+/// followed by `visit_element_start("ac:parameter")` for "quux", then both ends in reversed
+/// order — violating the expected pre-order/post-order pairing.
+#[test]
+fn test_issue_331_hyphenated_tags_xml_self_closing_visitor_events() {
+    #[derive(Debug, Default)]
+    struct EventRecorder {
+        events: Vec<String>,
+    }
+
+    impl HtmlVisitor for EventRecorder {
+        fn visit_element_start(&mut self, ctx: &NodeContext) -> VisitResult {
+            self.events.push(format!("start({})", ctx.tag_name));
+            VisitResult::Continue
+        }
+
+        fn visit_element_end(&mut self, ctx: &NodeContext, _output: &str) -> VisitResult {
+            self.events.push(format!("end({})", ctx.tag_name));
+            VisitResult::Continue
+        }
+    }
+
+    let html = r#"
+<structured-macro>
+  <ac:parameter ac:name="foo" />
+  <ac:parameter ac:name="quux">lalaland</ac:parameter>
+</structured-macro>
+"#;
+
+    let visitor = Rc::new(RefCell::new(EventRecorder::default()));
+    let result = convert(html, None, Some(visitor.clone()));
+    assert!(result.is_ok(), "conversion should succeed: {:?}", result.err());
+
+    let events = visitor.borrow().events.clone();
+
+    // Find the indices of start/end pairs for the two ac:parameter elements.
+    // With correct XML self-closing handling:
+    //   start(ac:parameter)[foo] → end(ac:parameter)[foo] → start(ac:parameter)[quux] → end(ac:parameter)[quux]
+    // With the bug (html5ever treats `/>` as open tag):
+    //   start(ac:parameter)[foo] → start(ac:parameter)[quux] → end(ac:parameter)[quux] → end(ac:parameter)[foo]
+
+    // Collect positions of start/end events for ac:parameter
+    let ac_param_starts: Vec<usize> = events
+        .iter()
+        .enumerate()
+        .filter(|(_, e)| e.starts_with("start(ac:parameter)"))
+        .map(|(i, _)| i)
+        .collect();
+    let ac_param_ends: Vec<usize> = events
+        .iter()
+        .enumerate()
+        .filter(|(_, e)| e.starts_with("end(ac:parameter)"))
+        .map(|(i, _)| i)
+        .collect();
+
+    assert_eq!(
+        ac_param_starts.len(),
+        2,
+        "expected exactly 2 ac:parameter start events, got: {events:?}"
+    );
+    assert_eq!(
+        ac_param_ends.len(),
+        2,
+        "expected exactly 2 ac:parameter end events, got: {events:?}"
+    );
+
+    // Each start must come before the corresponding end: start[0] < end[0] < start[1] < end[1]
+    assert!(
+        ac_param_starts[0] < ac_param_ends[0],
+        "first ac:parameter: start must precede end (got start@{}, end@{}); events: {events:?}",
+        ac_param_starts[0],
+        ac_param_ends[0],
+    );
+    assert!(
+        ac_param_ends[0] < ac_param_starts[1],
+        "first ac:parameter end must precede second ac:parameter start (got end@{}, start@{}); events: {events:?}",
+        ac_param_ends[0],
+        ac_param_starts[1],
+    );
+    assert!(
+        ac_param_starts[1] < ac_param_ends[1],
+        "second ac:parameter: start must precede end (got start@{}, end@{}); events: {events:?}",
+        ac_param_starts[1],
+        ac_param_ends[1],
+    );
+}
