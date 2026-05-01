@@ -73,7 +73,7 @@ def format_dependency(name: str, dep_spec: object) -> str:
     """Format a dependency spec for Cargo.toml."""
     if isinstance(dep_spec, str):
         return f'{name} = "{dep_spec}"'
-    elif isinstance(dep_spec, dict):
+    if isinstance(dep_spec, dict):
         version: str = dep_spec.get("version", "")
         package: str | None = dep_spec.get("package")
         features: list[str] = dep_spec.get("features", [])
@@ -111,7 +111,7 @@ def replace_workspace_deps_in_toml(
     toml_path: Path, workspace_deps: dict[str, object]
 ) -> None:
     """Replace workspace = true with explicit versions in a Cargo.toml file."""
-    with open(toml_path, "r") as f:
+    with open(toml_path) as f:
         content = f.read()
 
     for name, dep_spec in workspace_deps.items():
@@ -321,7 +321,7 @@ def main() -> None:
     for crate_dir in copied_crates:
         crate_toml = vendor_base / crate_dir / "Cargo.toml"
         if crate_toml.exists():
-            with open(crate_toml, "r") as f:
+            with open(crate_toml) as f:
                 content = f.read()
 
             content = re.sub(
@@ -405,7 +405,7 @@ def main() -> None:
     # To:   path = "../../vendor/html-to-markdown-rs"
     outer_toml = ext_dir / "Cargo.toml"
     if outer_toml.exists():
-        with open(outer_toml, "r") as f:
+        with open(outer_toml) as f:
             content = f.read()
         content = re.sub(
             r'path = "\.\./\.\./\.\./\.\./crates/html-to-markdown"',
@@ -421,7 +421,7 @@ def main() -> None:
     # To:   path = "../../../vendor/html-to-markdown-rs"
     native_toml = ext_dir / "native" / "Cargo.toml"
     if native_toml.exists():
-        with open(native_toml, "r") as f:
+        with open(native_toml) as f:
             content = f.read()
         content = re.sub(
             r'path = "\.\./\.\./\.\./\.\./\.\./crates/html-to-markdown"',
