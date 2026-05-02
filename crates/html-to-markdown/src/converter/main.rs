@@ -51,7 +51,11 @@ pub fn convert_html_impl(
     #[cfg(feature = "visitor")] visitor: Option<crate::visitor::VisitorHandle>,
     #[cfg(not(feature = "visitor"))] _visitor: Option<()>,
     structure_collector: Option<StructureCollectorHandle>,
-) -> Result<(String, Option<crate::types::DocumentStructure>)> {
+) -> Result<(
+    String,
+    Option<crate::types::DocumentStructure>,
+    Vec<crate::types::TableData>,
+)> {
     // Strip script and style tags completely to prevent parser confusion from HTML-like content
     // inside script/style elements. This preserves JSON-LD for metadata extraction.
     let stripped = strip_script_and_style_tags(html);
@@ -271,9 +275,8 @@ pub fn convert_html_impl(
     // The full pipeline was still run above so that metadata + visitor callbacks fire.
     if is_plain_text {
         let plain = extract_plain_text(&dom, parser, options);
-        let document =
-            structure_collector.and_then(|sc| std::rc::Rc::try_unwrap(sc).ok().map(|cell| cell.into_inner().finish()));
-        return Ok((plain, document));
+        let (document, tables) = finish_structure_collector(structure_collector);
+        return Ok((plain, document, tables));
     }
 
     trim_line_end_whitespace(&mut output);
@@ -285,11 +288,25 @@ pub fn convert_html_impl(
     };
 
     // Finish the structure collector if present.
-    let document =
-        structure_collector.and_then(|sc| std::rc::Rc::try_unwrap(sc).ok().map(|cell| cell.into_inner().finish()));
+    let (document, tables) = finish_structure_collector(structure_collector);
 
-    Ok((markdown, document))
+    Ok((markdown, document, tables))
 }
+
+/// Consume the structure collector and return the [`DocumentStructure`] and extracted
+/// [`TableData`] entries.  Returns `(None, vec![])` when no collector was provided.
+fn finish_structure_collector(
+    sc: Option<StructureCollectorHandle>,
+) -> (Option<crate::types::DocumentStructure>, Vec<crate::types::TableData>) {
+    match sc.and_then(|rc| std::rc::Rc::try_unwrap(rc).ok()) {
+        Some(cell) => {
+            let (doc, tables) = cell.into_inner().finish();
+            (Some(doc), tables)
+        }
+        None => (None, Vec::new()),
+    }
+}
+
 // has_more_than_one_char moved to main_helpers
 // is_inline_element available from utility::content
 

@@ -58,8 +58,9 @@ pub fn should_output_media_link(src: &str) -> bool {
 ///
 /// Extracts src from audio tag or nested source elements, outputs as a link,
 /// and processes fallback content (e.g., browser compatibility text).
+#[cfg_attr(not(feature = "visitor"), allow(unused_variables))]
 pub fn handle_audio(
-    _node_handle: &NodeHandle,
+    node_handle: &NodeHandle,
     tag: &HTMLTag,
     parser: &Parser,
     output: &mut String,
@@ -76,6 +77,54 @@ pub fn handle_audio(
     } else {
         extract_media_src(tag)
     };
+    let src_opt: Option<&str> = if src.is_empty() { None } else { Some(src.as_ref()) };
+
+    // Dispatch the visitor callback when a visitor is attached.
+    #[cfg(feature = "visitor")]
+    if let Some(ref visitor_handle) = ctx.visitor {
+        use crate::converter::utility::content::collect_tag_attributes;
+        use crate::visitor::{NodeContext, NodeType, VisitResult};
+
+        let attributes = collect_tag_attributes(tag);
+        let node_id = node_handle.get_inner();
+        let parent_tag = dom_ctx.parent_tag_name(node_id, parser);
+        let index_in_parent = dom_ctx.get_sibling_index(node_id).unwrap_or(0);
+        let node_ctx = NodeContext {
+            node_type: NodeType::Element,
+            tag_name: "audio".to_string(),
+            attributes,
+            depth,
+            index_in_parent,
+            parent_tag,
+            is_inline: false,
+        };
+        let visit_result = {
+            let mut visitor = visitor_handle.borrow_mut();
+            visitor.visit_audio(&node_ctx, src_opt)
+        };
+        match visit_result {
+            VisitResult::Continue => {}
+            VisitResult::Skip => return,
+            VisitResult::Custom(custom) => {
+                output.push_str(&custom);
+                if !ctx.in_paragraph && !ctx.convert_as_inline && !custom.ends_with('\n') {
+                    output.push('\n');
+                }
+                return;
+            }
+            VisitResult::PreserveHtml => {
+                use crate::converter::utility::serialization::serialize_node;
+                output.push_str(&serialize_node(node_handle, parser));
+                return;
+            }
+            VisitResult::Error(err) => {
+                if ctx.visitor_error.borrow().is_none() {
+                    *ctx.visitor_error.borrow_mut() = Some(err);
+                }
+                return;
+            }
+        }
+    }
 
     if should_output_media_link(&src) {
         if let Some(ref collector) = ctx.reference_collector {
@@ -121,8 +170,9 @@ pub fn handle_audio(
 ///
 /// Extracts src from video tag or nested source elements, outputs as a link,
 /// and processes fallback content (e.g., browser compatibility text).
+#[cfg_attr(not(feature = "visitor"), allow(unused_variables))]
 pub fn handle_video(
-    _node_handle: &NodeHandle,
+    node_handle: &NodeHandle,
     tag: &HTMLTag,
     parser: &Parser,
     output: &mut String,
@@ -139,6 +189,54 @@ pub fn handle_video(
     } else {
         extract_media_src(tag)
     };
+    let src_opt: Option<&str> = if src.is_empty() { None } else { Some(src.as_ref()) };
+
+    // Dispatch the visitor callback when a visitor is attached.
+    #[cfg(feature = "visitor")]
+    if let Some(ref visitor_handle) = ctx.visitor {
+        use crate::converter::utility::content::collect_tag_attributes;
+        use crate::visitor::{NodeContext, NodeType, VisitResult};
+
+        let attributes = collect_tag_attributes(tag);
+        let node_id = node_handle.get_inner();
+        let parent_tag = dom_ctx.parent_tag_name(node_id, parser);
+        let index_in_parent = dom_ctx.get_sibling_index(node_id).unwrap_or(0);
+        let node_ctx = NodeContext {
+            node_type: NodeType::Element,
+            tag_name: "video".to_string(),
+            attributes,
+            depth,
+            index_in_parent,
+            parent_tag,
+            is_inline: false,
+        };
+        let visit_result = {
+            let mut visitor = visitor_handle.borrow_mut();
+            visitor.visit_video(&node_ctx, src_opt)
+        };
+        match visit_result {
+            VisitResult::Continue => {}
+            VisitResult::Skip => return,
+            VisitResult::Custom(custom) => {
+                output.push_str(&custom);
+                if !ctx.in_paragraph && !ctx.convert_as_inline && !custom.ends_with('\n') {
+                    output.push('\n');
+                }
+                return;
+            }
+            VisitResult::PreserveHtml => {
+                use crate::converter::utility::serialization::serialize_node;
+                output.push_str(&serialize_node(node_handle, parser));
+                return;
+            }
+            VisitResult::Error(err) => {
+                if ctx.visitor_error.borrow().is_none() {
+                    *ctx.visitor_error.borrow_mut() = Some(err);
+                }
+                return;
+            }
+        }
+    }
 
     if should_output_media_link(&src) {
         if let Some(ref collector) = ctx.reference_collector {
@@ -209,12 +307,69 @@ pub fn handle_picture(
 ///
 /// Extracts src attribute from iframe and outputs as a markdown link.
 /// iframes cannot be embedded in markdown, so we just provide a link to the source.
-pub fn handle_iframe(tag: &HTMLTag, output: &mut String, ctx: &Context) {
+#[cfg_attr(not(feature = "visitor"), allow(unused_variables))]
+pub fn handle_iframe(
+    node_handle: &NodeHandle,
+    tag: &HTMLTag,
+    output: &mut String,
+    ctx: &Context,
+    depth: usize,
+    dom_ctx: &DomContext,
+    parser: &Parser,
+) {
     let src = tag
         .attributes()
         .get("src")
         .flatten()
         .map_or(Cow::Borrowed(""), |v| v.as_utf8_str());
+    let src_opt: Option<&str> = if src.is_empty() { None } else { Some(src.as_ref()) };
+
+    // Dispatch the visitor callback when a visitor is attached.
+    #[cfg(feature = "visitor")]
+    if let Some(ref visitor_handle) = ctx.visitor {
+        use crate::converter::utility::content::collect_tag_attributes;
+        use crate::visitor::{NodeContext, NodeType, VisitResult};
+
+        let attributes = collect_tag_attributes(tag);
+        let node_id = node_handle.get_inner();
+        let parent_tag = dom_ctx.parent_tag_name(node_id, parser);
+        let index_in_parent = dom_ctx.get_sibling_index(node_id).unwrap_or(0);
+        let node_ctx = NodeContext {
+            node_type: NodeType::Element,
+            tag_name: "iframe".to_string(),
+            attributes,
+            depth,
+            index_in_parent,
+            parent_tag,
+            is_inline: false,
+        };
+        let visit_result = {
+            let mut visitor = visitor_handle.borrow_mut();
+            visitor.visit_iframe(&node_ctx, src_opt)
+        };
+        match visit_result {
+            VisitResult::Continue => {}
+            VisitResult::Skip => return,
+            VisitResult::Custom(custom) => {
+                output.push_str(&custom);
+                if !ctx.in_paragraph && !ctx.convert_as_inline && !custom.ends_with('\n') {
+                    output.push('\n');
+                }
+                return;
+            }
+            VisitResult::PreserveHtml => {
+                use crate::converter::utility::serialization::serialize_node;
+                output.push_str(&serialize_node(node_handle, parser));
+                return;
+            }
+            VisitResult::Error(err) => {
+                if ctx.visitor_error.borrow().is_none() {
+                    *ctx.visitor_error.borrow_mut() = Some(err);
+                }
+                return;
+            }
+        }
+    }
 
     if !src.is_empty() {
         if let Some(ref collector) = ctx.reference_collector {

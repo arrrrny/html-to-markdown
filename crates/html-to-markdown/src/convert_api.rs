@@ -126,7 +126,7 @@ pub fn convert(
     // Run the conversion pipeline.
     // Pass structure_collector by value — convert_html_impl will consume it via Rc::try_unwrap
     // to return the finished DocumentStructure. We must not hold a second Rc reference.
-    let (markdown, document) = {
+    let (markdown, document, tables) = {
         #[cfg(all(feature = "metadata", feature = "inline-images"))]
         {
             crate::converter::convert_html_impl(
@@ -221,7 +221,7 @@ pub fn convert(
         document,
         #[cfg(feature = "metadata")]
         metadata,
-        tables: Vec::new(),
+        tables,
         #[cfg(feature = "inline-images")]
         images,
         warnings,

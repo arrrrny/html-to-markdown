@@ -16,7 +16,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use super::document::{DocumentNode, DocumentStructure, NodeContent};
-use super::tables::TableGrid;
+use super::tables::{TableData, TableGrid};
 
 /// Shared mutable handle used in [`crate::converter::Context`].
 pub type StructureCollectorHandle = Rc<RefCell<StructureCollector>>;
@@ -32,6 +32,10 @@ pub struct StructureCollector {
     container_stack: Vec<u32>,
     /// Open list container indices (innermost last).
     list_stack: Vec<u32>,
+    /// Extracted tables with both structured grid data and markdown rendering.
+    ///
+    /// Populated by [`push_table_data`] when document structure extraction is enabled.
+    tables: Vec<TableData>,
 }
 
 impl StructureCollector {
@@ -42,6 +46,7 @@ impl StructureCollector {
             section_stack: Vec::new(),
             container_stack: Vec::new(),
             list_stack: Vec::new(),
+            tables: Vec::new(),
         }
     }
 
@@ -181,7 +186,36 @@ impl StructureCollector {
         idx
     }
 
-    /// Record a table.
+    /// Record a table with both structured grid data and its markdown rendering.
+    ///
+    /// Adds the table to the document tree as a [`NodeContent::Table`] node and also
+    /// appends a [`TableData`] entry (grid + markdown) to the flat tables list that is
+    /// exposed via [`ConversionResult::tables`].
+    ///
+    /// Returns the node index.
+    pub fn push_table_data(&mut self, grid: TableGrid, markdown: String) -> u32 {
+        let parent = self.current_structural_parent();
+        let label = grid.rows.to_string();
+        let id = Self::generate_id("table", &label, self.nodes.len() as u32);
+        let idx = self.raw_push(DocumentNode {
+            id,
+            content: NodeContent::Table { grid: grid.clone() },
+            parent,
+            children: Vec::new(),
+            annotations: Vec::new(),
+            attributes: None,
+        });
+        if let Some(p) = parent {
+            self.add_child(p, idx);
+        }
+        self.tables.push(TableData { grid, markdown });
+        idx
+    }
+
+    /// Record a table (grid only, no markdown rendering).
+    ///
+    /// Prefer [`push_table_data`] when the markdown rendering is available; use this
+    /// method only when the markdown is not yet computed.
     ///
     /// Returns the node index.
     pub fn push_table(&mut self, grid: TableGrid) -> u32 {
@@ -299,12 +333,17 @@ impl StructureCollector {
         idx
     }
 
-    /// Consume the collector and return the completed [`DocumentStructure`].
-    pub fn finish(self) -> DocumentStructure {
-        DocumentStructure {
+    /// Consume the collector and return the completed [`DocumentStructure`] and extracted
+    /// [`TableData`] entries.
+    ///
+    /// Returns `(DocumentStructure, Vec<TableData>)`.  The tables vec contains one entry per
+    /// `<table>` element that was processed via [`push_table_data`].
+    pub fn finish(self) -> (DocumentStructure, Vec<TableData>) {
+        let doc = DocumentStructure {
             nodes: self.nodes,
             source_format: Some("html".to_string()),
-        }
+        };
+        (doc, self.tables)
     }
 
     // ── Private helpers ──────────────────────────────────────────────────────
@@ -436,8 +475,9 @@ mod tests {
         let mut c = StructureCollector::new();
         c.push_heading(1, "Title", None);
         c.push_paragraph("Text");
-        let doc = c.finish();
+        let (doc, tables) = c.finish();
         assert_eq!(doc.source_format, Some("html".to_string()));
         assert_eq!(doc.nodes.len(), 3); // Group + Heading + Paragraph
+        assert!(tables.is_empty());
     }
 }

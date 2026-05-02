@@ -59,7 +59,7 @@ pub fn dispatch_media_handler(
 
     match tag_name {
         "iframe" => {
-            embedded::handle_iframe(tag, output, ctx);
+            embedded::handle_iframe(node_handle, tag, output, ctx, depth, dom_ctx, parser);
             true
         }
         "video" => {

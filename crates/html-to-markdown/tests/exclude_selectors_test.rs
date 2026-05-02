@@ -3,11 +3,7 @@
 use html_to_markdown_rs::ConversionOptions;
 
 fn convert(html: &str, opts: Option<ConversionOptions>) -> html_to_markdown_rs::error::Result<String> {
-    #[cfg(feature = "visitor")]
-    let result = html_to_markdown_rs::convert(html, opts, None);
-    #[cfg(not(feature = "visitor"))]
-    let result = html_to_markdown_rs::convert(html, opts);
-    result.map(|r| r.content.unwrap_or_default())
+    html_to_markdown_rs::convert(html, opts, None).map(|r| r.content.unwrap_or_default())
 }
 
 #[test]
