@@ -60,6 +60,370 @@ typedef struct HTMWhitespaceMode HTMWhitespaceMode;
 typedef struct HTMHtmHtmlVisitorBridge HTMHtmHtmlVisitorBridge;
 
 /**
+ * VTable for C plugin bridges implementing the `HtmlVisitor` trait.
+ *
+ * # Safety
+ *
+ * All function pointers must be valid for the lifetime of any bridge created from
+ * this vtable.  `free_user_data`, when non-null, is called once with `user_data`
+ * when the bridge is dropped.
+ */
+typedef struct HTMHtmHtmlVisitorVTable {
+  /**
+   * Called before entering any element.
+   *
+   * This is the first callback invoked for every HTML element, allowing
+   * visitors to implement generic element handling before tag-specific logic.
+   */
+  int32_t (*visit_element_start)(const void *user_data,
+                                 const char *_ctx,
+                                 char **out_result);
+  /**
+   * Called after exiting any element.
+   *
+   * Receives the default markdown output that would be generated.
+   * Visitors can inspect or replace this output.
+   */
+  int32_t (*visit_element_end)(const void *user_data,
+                               const char *_ctx,
+                               const char *_output,
+                               char **out_result);
+  /**
+   * Visit text nodes (most frequent callback - ~100+ per document).
+   *
+   * # Arguments
+   * - `ctx`: Node context (will have `node_type: NodeType::Text`)
+   * - `text`: The raw text content (HTML entities already decoded)
+   */
+  int32_t (*visit_text)(const void *user_data,
+                        const char *_ctx,
+                        const char *_text,
+                        char **out_result);
+  /**
+   * Visit anchor links `<a href="...">`.
+   *
+   * # Arguments
+   * - `ctx`: Node context with link element metadata
+   * - `href`: The link URL (from `href` attribute)
+   * - `text`: The link text content (already converted to markdown)
+   * - `title`: Optional title attribute
+   */
+  int32_t (*visit_link)(const void *user_data,
+                        const char *_ctx,
+                        const char *_href,
+                        const char *_text,
+                        const char *_title,
+                        char **out_result);
+  /**
+   * Visit images `<img src="...">`.
+   *
+   * # Arguments
+   * - `ctx`: Node context with image element metadata
+   * - `src`: The image source URL
+   * - `alt`: The alt text
+   * - `title`: Optional title attribute
+   */
+  int32_t (*visit_image)(const void *user_data,
+                         const char *_ctx,
+                         const char *_src,
+                         const char *_alt,
+                         const char *_title,
+                         char **out_result);
+  /**
+   * Visit heading elements `<h1>` through `<h6>`.
+   *
+   * # Arguments
+   * - `ctx`: Node context with heading metadata
+   * - `level`: Heading level (1-6)
+   * - `text`: The heading text content
+   * - `id`: Optional id attribute (for anchor links)
+   */
+  int32_t (*visit_heading)(const void *user_data,
+                           const char *_ctx,
+                           uint32_t _level,
+                           const char *_text,
+                           const char *_id,
+                           char **out_result);
+  /**
+   * Visit code blocks `<pre><code>`.
+   *
+   * # Arguments
+   * - `ctx`: Node context
+   * - `lang`: Optional language specifier (from class attribute)
+   * - `code`: The code content
+   */
+  int32_t (*visit_code_block)(const void *user_data,
+                              const char *_ctx,
+                              const char *_lang,
+                              const char *_code,
+                              char **out_result);
+  /**
+   * Visit inline code `<code>`.
+   *
+   * # Arguments
+   * - `ctx`: Node context
+   * - `code`: The code content
+   */
+  int32_t (*visit_code_inline)(const void *user_data,
+                               const char *_ctx,
+                               const char *_code,
+                               char **out_result);
+  /**
+   * Visit list items `<li>`.
+   *
+   * # Arguments
+   * - `ctx`: Node context
+   * - `ordered`: Whether this is an ordered list item
+   * - `marker`: The list marker (e.g., "-", "1.", "a)")
+   * - `text`: The list item content (already converted)
+   */
+  int32_t (*visit_list_item)(const void *user_data,
+                             const char *_ctx,
+                             int32_t _ordered,
+                             const char *_marker,
+                             const char *_text,
+                             char **out_result);
+  /**
+   * Called before processing a list `<ul>` or `<ol>`.
+   */
+  int32_t (*visit_list_start)(const void *user_data,
+                              const char *_ctx,
+                              int32_t _ordered,
+                              char **out_result);
+  /**
+   * Called after processing a list `</ul>` or `</ol>`.
+   */
+  int32_t (*visit_list_end)(const void *user_data,
+                            const char *_ctx,
+                            int32_t _ordered,
+                            const char *_output,
+                            char **out_result);
+  /**
+   * Called before processing a table `<table>`.
+   */
+  int32_t (*visit_table_start)(const void *user_data,
+                               const char *_ctx,
+                               char **out_result);
+  /**
+   * Visit table rows `<tr>`.
+   *
+   * # Arguments
+   * - `ctx`: Node context
+   * - `cells`: Cell contents (already converted to markdown)
+   * - `is_header`: Whether this row is in `<thead>`
+   */
+  int32_t (*visit_table_row)(const void *user_data,
+                             const char *_ctx,
+                             const char *_cells,
+                             int32_t _is_header,
+                             char **out_result);
+  /**
+   * Called after processing a table `</table>`.
+   */
+  int32_t (*visit_table_end)(const void *user_data,
+                             const char *_ctx,
+                             const char *_output,
+                             char **out_result);
+  /**
+   * Visit blockquote elements `<blockquote>`.
+   *
+   * # Arguments
+   * - `ctx`: Node context
+   * - `content`: The blockquote content (already converted)
+   * - `depth`: Nesting depth (for nested blockquotes)
+   */
+  int32_t (*visit_blockquote)(const void *user_data,
+                              const char *_ctx,
+                              const char *_content,
+                              uintptr_t _depth,
+                              char **out_result);
+  /**
+   * Visit strong/bold elements `<strong>`, `<b>`.
+   */
+  int32_t (*visit_strong)(const void *user_data,
+                          const char *_ctx,
+                          const char *_text,
+                          char **out_result);
+  /**
+   * Visit emphasis/italic elements `<em>`, `<i>`.
+   */
+  int32_t (*visit_emphasis)(const void *user_data,
+                            const char *_ctx,
+                            const char *_text,
+                            char **out_result);
+  /**
+   * Visit strikethrough elements `<s>`, `<del>`, `<strike>`.
+   */
+  int32_t (*visit_strikethrough)(const void *user_data,
+                                 const char *_ctx,
+                                 const char *_text,
+                                 char **out_result);
+  /**
+   * Visit underline elements `<u>`, `<ins>`.
+   */
+  int32_t (*visit_underline)(const void *user_data,
+                             const char *_ctx,
+                             const char *_text,
+                             char **out_result);
+  /**
+   * Visit subscript elements `<sub>`.
+   */
+  int32_t (*visit_subscript)(const void *user_data,
+                             const char *_ctx,
+                             const char *_text,
+                             char **out_result);
+  /**
+   * Visit superscript elements `<sup>`.
+   */
+  int32_t (*visit_superscript)(const void *user_data,
+                               const char *_ctx,
+                               const char *_text,
+                               char **out_result);
+  /**
+   * Visit mark/highlight elements `<mark>`.
+   */
+  int32_t (*visit_mark)(const void *user_data,
+                        const char *_ctx,
+                        const char *_text,
+                        char **out_result);
+  /**
+   * Visit line break elements `<br>`.
+   */
+  int32_t (*visit_line_break)(const void *user_data,
+                              const char *_ctx,
+                              char **out_result);
+  /**
+   * Visit horizontal rule elements `<hr>`.
+   */
+  int32_t (*visit_horizontal_rule)(const void *user_data,
+                                   const char *_ctx,
+                                   char **out_result);
+  /**
+   * Visit custom elements (web components) or unknown tags.
+   *
+   * # Arguments
+   * - `ctx`: Node context
+   * - `tag_name`: The custom element's tag name
+   * - `html`: The raw HTML of this element
+   */
+  int32_t (*visit_custom_element)(const void *user_data,
+                                  const char *_ctx,
+                                  const char *_tag_name,
+                                  const char *_html,
+                                  char **out_result);
+  /**
+   * Visit definition list `<dl>`.
+   */
+  int32_t (*visit_definition_list_start)(const void *user_data,
+                                         const char *_ctx,
+                                         char **out_result);
+  /**
+   * Visit definition term `<dt>`.
+   */
+  int32_t (*visit_definition_term)(const void *user_data,
+                                   const char *_ctx,
+                                   const char *_text,
+                                   char **out_result);
+  /**
+   * Visit definition description `<dd>`.
+   */
+  int32_t (*visit_definition_description)(const void *user_data,
+                                          const char *_ctx,
+                                          const char *_text,
+                                          char **out_result);
+  /**
+   * Called after processing a definition list `</dl>`.
+   */
+  int32_t (*visit_definition_list_end)(const void *user_data,
+                                       const char *_ctx,
+                                       const char *_output,
+                                       char **out_result);
+  /**
+   * Visit form elements `<form>`.
+   */
+  int32_t (*visit_form)(const void *user_data,
+                        const char *_ctx,
+                        const char *_action,
+                        const char *_method,
+                        char **out_result);
+  /**
+   * Visit input elements `<input>`.
+   */
+  int32_t (*visit_input)(const void *user_data,
+                         const char *_ctx,
+                         const char *_input_type,
+                         const char *_name,
+                         const char *_value,
+                         char **out_result);
+  /**
+   * Visit button elements `<button>`.
+   */
+  int32_t (*visit_button)(const void *user_data,
+                          const char *_ctx,
+                          const char *_text,
+                          char **out_result);
+  /**
+   * Visit audio elements `<audio>`.
+   */
+  int32_t (*visit_audio)(const void *user_data,
+                         const char *_ctx,
+                         const char *_src,
+                         char **out_result);
+  /**
+   * Visit video elements `<video>`.
+   */
+  int32_t (*visit_video)(const void *user_data,
+                         const char *_ctx,
+                         const char *_src,
+                         char **out_result);
+  /**
+   * Visit iframe elements `<iframe>`.
+   */
+  int32_t (*visit_iframe)(const void *user_data,
+                          const char *_ctx,
+                          const char *_src,
+                          char **out_result);
+  /**
+   * Visit details elements `<details>`.
+   */
+  int32_t (*visit_details)(const void *user_data,
+                           const char *_ctx,
+                           int32_t _open,
+                           char **out_result);
+  /**
+   * Visit summary elements `<summary>`.
+   */
+  int32_t (*visit_summary)(const void *user_data,
+                           const char *_ctx,
+                           const char *_text,
+                           char **out_result);
+  /**
+   * Visit figure elements `<figure>`.
+   */
+  int32_t (*visit_figure_start)(const void *user_data,
+                                const char *_ctx,
+                                char **out_result);
+  /**
+   * Visit figcaption elements `<figcaption>`.
+   */
+  int32_t (*visit_figcaption)(const void *user_data,
+                              const char *_ctx,
+                              const char *_text,
+                              char **out_result);
+  /**
+   * Called after processing a figure `</figure>`.
+   */
+  int32_t (*visit_figure_end)(const void *user_data,
+                              const char *_ctx,
+                              const char *_output,
+                              char **out_result);
+  /**
+   * Optional destructor: called once with `user_data` when the bridge is dropped.
+   */
+  void (*free_user_data)(void*);
+} HTMHtmHtmlVisitorVTable;
+
+/**
  * Return the last error code (0 means no error).
  * # Safety
  * Caller must ensure all pointer arguments are valid or null.
@@ -533,6 +897,14 @@ char *htm_html_metadata_images(const HTMHtmlMetadata *ptr);
  * Pointer must be a valid handle returned by this library.
  */
 char *htm_html_metadata_structured_data(const HTMHtmlMetadata *ptr);
+
+/**
+ * Create a `ConversionOptions` from a JSON string. Returns null on failure.
+ * # Safety
+ * JSON string must be valid UTF-8 and null-terminated.
+ * Returned handle must be freed with `htm_conversion_options_free`.
+ */
+HTMConversionOptions *htm_conversion_options_from_json(const char *json);
 
 /**
  * Serialize a `ConversionOptions` to a JSON string. Returns null on failure.
@@ -2183,5 +2555,33 @@ void htm_options_set_visitor(HTMConversionOptions *options,
  */
 HTMConversionResult *htm_convert(const char *html,
                                  const HTMConversionOptions *options);
+
+/**
+ * Create a new `HtmHtmlVisitorBridge` from a vtable and opaque user_data pointer.
+ *
+ * Returns a heap-allocated `HtmHtmlVisitorBridge` on success, or null if `vtable` is null.
+ * The caller is responsible for calling `htm_htm_html_visitor_bridge_free` exactly once when the bridge is
+ * no longer needed.
+ *
+ * # Safety
+ *
+ * `vtable` must be a non-null pointer to a fully initialised `HtmHtmlVisitorVTable` that
+ * remains valid for the lifetime of the returned bridge.  `user_data` must be valid
+ * for any thread that calls methods on this bridge.
+ */
+struct HTMHtmHtmlVisitorBridge *htm_htm_html_visitor_bridge_new(const struct HTMHtmHtmlVisitorVTable *vtable,
+                                                                const void *user_data);
+
+/**
+ * Free a `HtmHtmlVisitorBridge` created by `htm_htm_html_visitor_bridge_new`.
+ *
+ * After this call `ptr` is invalid. Passing null is a no-op.
+ *
+ * # Safety
+ *
+ * `ptr` must be either null or a non-null pointer returned by `htm_htm_html_visitor_bridge_new` that has
+ * not yet been freed.
+ */
+void htm_htm_html_visitor_bridge_free(struct HTMHtmHtmlVisitorBridge *ptr);
 
 #endif  /* HTM_H */
