@@ -869,17 +869,17 @@ linkStyle = "LinkStyle"
 outputFormat = "OutputFormat"
 
 [e2e.call.overrides.wasm]
-options_type = "JsConversionOptions"
+options_type = "WasmConversionOptions"
 
 [e2e.call.overrides.wasm.enum_fields]
-headingStyle = "JsHeadingStyle"
-codeBlockStyle = "JsCodeBlockStyle"
-listIndentType = "JsListIndentType"
-newlineStyle = "JsNewlineStyle"
-whitespaceMode = "JsWhitespaceMode"
-highlightStyle = "JsHighlightStyle"
-linkStyle = "JsLinkStyle"
-outputFormat = "JsOutputFormat"
+headingStyle = "WasmHeadingStyle"
+codeBlockStyle = "WasmCodeBlockStyle"
+listIndentType = "WasmListIndentType"
+newlineStyle = "WasmNewlineStyle"
+whitespaceMode = "WasmWhitespaceMode"
+highlightStyle = "WasmHighlightStyle"
+linkStyle = "WasmLinkStyle"
+outputFormat = "WasmOutputFormat"
 
 [e2e.call.overrides.c]
 header = "html_to_markdown.h"

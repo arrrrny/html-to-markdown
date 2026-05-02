@@ -844,8 +844,8 @@ impl WasmConversionOptions {
         max_image_size: Option<u64>,
         capture_svg: Option<bool>,
         infer_dimensions: Option<bool>,
-        exclude_selectors: Option<Vec<String>>,
         max_depth: Option<usize>,
+        exclude_selectors: Option<Vec<String>>,
     ) -> WasmConversionOptions {
         WasmConversionOptions {
             heading_style: heading_style.unwrap_or_default(),
@@ -1318,8 +1318,11 @@ impl WasmConversionOptions {
 
     /// Apply a partial update to these conversion options.
     #[wasm_bindgen(js_name = "applyUpdate")]
-    pub fn apply_update(&self, _update: WasmConversionOptionsUpdate) -> () {
-        ()
+    pub fn apply_update(&mut self, update: WasmConversionOptionsUpdate) {
+        let core_update: html_to_markdown_rs::ConversionOptionsUpdate = update.into();
+        let mut core: html_to_markdown_rs::ConversionOptions = self.clone().into();
+        core.apply_update(core_update);
+        *self = core.into();
     }
 
     /// Create from a partial update, applying to defaults.
@@ -2029,8 +2032,11 @@ impl WasmPreprocessingOptions {
     ///
     /// * `update` - Partial preprocessing options update
     #[wasm_bindgen(js_name = "applyUpdate")]
-    pub fn apply_update(&self, _update: WasmPreprocessingOptionsUpdate) -> () {
-        ()
+    pub fn apply_update(&mut self, update: WasmPreprocessingOptionsUpdate) {
+        let core_update: html_to_markdown_rs::PreprocessingOptionsUpdate = update.into();
+        let mut core: html_to_markdown_rs::PreprocessingOptions = self.clone().into();
+        core.apply_update(core_update);
+        *self = core.into();
     }
 
     /// Create new preprocessing options from a partial update.
@@ -2174,7 +2180,7 @@ impl WasmDocumentStructure {
 #[wasm_bindgen]
 pub struct WasmDocumentNode {
     id: String,
-    content: WasmNodeContent,
+    content: JsValue,
     parent: Option<u32>,
     children: Vec<u32>,
     annotations: Vec<WasmTextAnnotation>,
@@ -2186,7 +2192,7 @@ impl WasmDocumentNode {
     #[wasm_bindgen(constructor)]
     pub fn new(
         id: String,
-        content: WasmNodeContent,
+        content: JsValue,
         children: Vec<u32>,
         annotations: Vec<WasmTextAnnotation>,
         parent: Option<u32>,
@@ -2213,12 +2219,12 @@ impl WasmDocumentNode {
     }
 
     #[wasm_bindgen(getter)]
-    pub fn content(&self) -> WasmNodeContent {
-        self.content
+    pub fn content(&self) -> JsValue {
+        self.content.clone()
     }
 
     #[wasm_bindgen(setter)]
-    pub fn set_content(&mut self, value: WasmNodeContent) {
+    pub fn set_content(&mut self, value: JsValue) {
         self.content = value;
     }
 
@@ -2841,7 +2847,7 @@ pub enum WasmPreprocessingPreset {
 #[allow(clippy::derivable_impls)]
 impl Default for WasmPreprocessingPreset {
     fn default() -> Self {
-        Self::Minimal
+        Self::Standard
     }
 }
 
@@ -2859,7 +2865,7 @@ pub enum WasmHeadingStyle {
 #[allow(clippy::derivable_impls)]
 impl Default for WasmHeadingStyle {
     fn default() -> Self {
-        Self::Underlined
+        Self::Atx
     }
 }
 
@@ -2928,7 +2934,7 @@ pub enum WasmCodeBlockStyle {
 #[allow(clippy::derivable_impls)]
 impl Default for WasmCodeBlockStyle {
     fn default() -> Self {
-        Self::Indented
+        Self::Backticks
     }
 }
 
@@ -3302,6 +3308,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -3341,6 +3361,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -3380,6 +3414,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -3426,6 +3474,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -3472,6 +3534,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -3518,6 +3594,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -3562,6 +3652,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -3601,6 +3705,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -3644,6 +3762,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -3683,6 +3815,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -3724,6 +3870,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -3758,6 +3918,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -3799,6 +3973,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -3838,6 +4026,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -3879,6 +4081,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -3918,6 +4134,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -3957,6 +4187,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -3996,6 +4240,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -4035,6 +4293,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -4074,6 +4346,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -4113,6 +4399,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -4152,6 +4452,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -4186,6 +4500,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -4223,6 +4551,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -4264,6 +4606,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -4301,6 +4657,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -4340,6 +4710,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -4379,6 +4763,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -4418,6 +4816,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -4465,6 +4877,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -4514,6 +4940,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -4553,6 +4993,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -4595,6 +5049,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -4637,6 +5105,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -4679,6 +5161,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -4718,6 +5214,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -4757,6 +5267,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -4791,6 +5315,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -4830,6 +5368,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -4869,6 +5421,20 @@ mod __alef_wasm_bridge_htmlvisitor {
                             "preserve_html" | "preservehtml" => html_to_markdown_rs::VisitResult::PreserveHtml,
                             other => html_to_markdown_rs::VisitResult::Custom(other.to_string()),
                         }
+                    } else if val.is_object() {
+                        let custom_key = wasm_bindgen::JsValue::from_str("custom");
+                        let error_key = wasm_bindgen::JsValue::from_str("error");
+                        if let Ok(cv) = js_sys::Reflect::get(&val, &custom_key) {
+                            if let Some(s) = cv.as_string() {
+                                return html_to_markdown_rs::VisitResult::Custom(s);
+                            }
+                        }
+                        if let Ok(ev) = js_sys::Reflect::get(&val, &error_key) {
+                            if ev.as_string().is_some() {
+                                return html_to_markdown_rs::VisitResult::Continue;
+                            }
+                        }
+                        html_to_markdown_rs::VisitResult::Continue
                     } else {
                         html_to_markdown_rs::VisitResult::Continue
                     }
@@ -5324,7 +5890,8 @@ impl From<WasmDocumentNode> for html_to_markdown_rs::DocumentNode {
     fn from(val: WasmDocumentNode) -> Self {
         Self {
             id: val.id,
-            content: val.content.into(),
+            content: serde_wasm_bindgen::from_value(val.content)
+                .unwrap_or(html_to_markdown_rs::NodeContent::Quote),
             parent: val.parent,
             children: val.children,
             annotations: val.annotations.into_iter().map(Into::into).collect(),
@@ -5341,7 +5908,8 @@ impl From<html_to_markdown_rs::DocumentNode> for WasmDocumentNode {
     fn from(val: html_to_markdown_rs::DocumentNode) -> Self {
         Self {
             id: val.id,
-            content: val.content.into(),
+            content: serde_wasm_bindgen::to_value(&val.content)
+                .unwrap_or(wasm_bindgen::JsValue::NULL),
             parent: val.parent,
             children: val.children,
             annotations: val.annotations.into_iter().map(Into::into).collect(),

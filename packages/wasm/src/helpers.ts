@@ -57,6 +57,7 @@ export interface ConversionOptions {
   captureSvg?: boolean | null;
   inferDimensions?: boolean | null;
   maxDepth?: number | null;
+  excludeSelectors?: string[] | null;
 }
 
 /**
@@ -118,6 +119,7 @@ export function convert(html: string, options?: ConversionOptions | null): WasmC
     options.captureSvg,
     options.inferDimensions,
     options.maxDepth,
+    options.excludeSelectors,
   );
 
   try {
