@@ -4,10 +4,10 @@
 
 use std::borrow::Cow;
 
-use crate::error::Result;
-use crate::options::{ConversionOptions, WhitespaceMode};
 #[cfg(any(feature = "metadata", feature = "inline-images"))]
 use crate::ConversionError;
+use crate::error::Result;
+use crate::options::{ConversionOptions, WhitespaceMode};
 use crate::text;
 use crate::types::ConversionResult;
 use crate::validation::{Utf16Encoding, detect_utf16_encoding, validate_input};

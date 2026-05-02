@@ -5,20 +5,20 @@
  * that instantiate WebAssembly modules asynchronously (Cloudflare Workers, esbuild, etc).
  */
 
-const fs = require('node:fs');
-const path = require('node:path');
+const fs = require("node:fs");
+const path = require("node:path");
 
-const rootDir = path.resolve(__dirname, '..');
+const rootDir = path.resolve(__dirname, "..");
 const args = process.argv.slice(2);
-let distArg = args.find((arg) => !arg.startsWith('--'));
-distArg = distArg || 'dist';
-const flags = new Set(args.filter((arg) => arg.startsWith('--')));
-const typesOnly = flags.has('--types-only');
+let distArg = args.find((arg) => !arg.startsWith("--"));
+distArg = distArg || "dist";
+const flags = new Set(args.filter((arg) => arg.startsWith("--")));
+const typesOnly = flags.has("--types-only");
 
 const distDir = path.resolve(rootDir, distArg);
-const entryPath = path.join(distDir, 'html_to_markdown_wasm.js');
-const dtsPath = path.join(distDir, 'html_to_markdown_wasm.d.ts');
-const bgPath = path.join(distDir, 'html_to_markdown_wasm_bg.js');
+const entryPath = path.join(distDir, "html_to_markdown_wasm.js");
+const dtsPath = path.join(distDir, "html_to_markdown_wasm.d.ts");
+const bgPath = path.join(distDir, "html_to_markdown_wasm_bg.js");
 
 const typeDefinitions = `
 export type WasmHeadingStyle = "underlined" | "atx" | "atxClosed";
@@ -148,11 +148,11 @@ export interface WasmConversionResult {
 
 function injectTypedef(content, specifier) {
   const typedefBlock = `\n/**\n * @typedef {import("${specifier}").WasmConversionOptions} WasmConversionOptions\n */\n`;
-  if (content.includes('WasmConversionOptions} WasmConversionOptions')) {
+  if (content.includes("WasmConversionOptions} WasmConversionOptions")) {
     return content;
   }
-  if (content.includes('let wasm;')) {
-    return content.replace('let wasm;', `let wasm;${typedefBlock}`);
+  if (content.includes("let wasm;")) {
+    return content.replace("let wasm;", `let wasm;${typedefBlock}`);
   }
   return `${typedefBlock}${content}`;
 }
@@ -161,21 +161,21 @@ function patchJsDoc(targetPath, typeSpecifier) {
   if (!fs.existsSync(targetPath)) {
     return;
   }
-  let jsContent = fs.readFileSync(targetPath, 'utf8');
+  let jsContent = fs.readFileSync(targetPath, "utf8");
   const originalContent = jsContent;
 
   jsContent = injectTypedef(jsContent, typeSpecifier);
 
   const optionsPattern = /@param\s+\{any\}\s+options/g;
-  const optionsReplacement = '@param {WasmConversionOptions | null | undefined} [options]';
+  const optionsReplacement = "@param {WasmConversionOptions | null | undefined} [options]";
   jsContent = jsContent.replace(optionsPattern, optionsReplacement);
 
   const returnsPattern = /@returns\s+\{any\}/g;
-  const returnsReplacement = '@returns {WasmConversionResult}';
+  const returnsReplacement = "@returns {WasmConversionResult}";
   jsContent = jsContent.replace(returnsPattern, returnsReplacement);
 
   if (jsContent !== originalContent) {
-    fs.writeFileSync(targetPath, jsContent, 'utf8');
+    fs.writeFileSync(targetPath, jsContent, "utf8");
   }
 }
 
@@ -303,7 +303,7 @@ export async function initWasm() {
 }
 `;
 
-  fs.writeFileSync(entryPath, wrapper, 'utf8');
+  fs.writeFileSync(entryPath, wrapper, "utf8");
 }
 
 if (!fs.existsSync(dtsPath)) {
@@ -311,64 +311,63 @@ if (!fs.existsSync(dtsPath)) {
   process.exit(1);
 }
 
-let content = fs.readFileSync(dtsPath, 'utf8');
+let content = fs.readFileSync(dtsPath, "utf8");
 
-if (!typesOnly && !content.includes('initWasm():')) {
+if (!typesOnly && !content.includes("initWasm():")) {
   const additions = `\nexport declare function initWasm(): Promise<void>;\nexport declare const wasmReady: Promise<void>;\n`;
   content += additions;
 }
 
-if (content.includes('options: any')) {
-  content = content.replace(/options: any/g, 'options?: WasmConversionOptions | null');
+if (content.includes("options: any")) {
+  content = content.replace(/options: any/g, "options?: WasmConversionOptions | null");
 }
 
-content = content.replace('readonly attributes: any;', 'readonly attributes: Record<string, string>;');
+content = content.replace(
+  "readonly attributes: any;",
+  "readonly attributes: Record<string, string>;",
+);
 
 // Fix return types: wasm-bindgen generates `string` or `any` for Result<JsValue, JsValue>
-if (!content.includes('WasmConversionResult')) {
+if (!content.includes("WasmConversionResult")) {
   // convert() returns a structured result object, not a string
   content = content.replace(
     /export function convert\(html: string, options\?: WasmConversionOptions \| null\): string;/,
-    'export function convert(html: string, options?: WasmConversionOptions | null): WasmConversionResult;'
+    "export function convert(html: string, options?: WasmConversionOptions | null): WasmConversionResult;",
   );
   // Also handle the case where wasm-bindgen emits `any` as the return type
   content = content.replace(
     /export function convert\(html: string, options\?: WasmConversionOptions \| null\): any;/,
-    'export function convert(html: string, options?: WasmConversionOptions | null): WasmConversionResult;'
+    "export function convert(html: string, options?: WasmConversionOptions | null): WasmConversionResult;",
   );
   // convertWithMetadata and convertBytesWithMetadata return structured results
   content = content.replace(
     /export function convertWithMetadata\(([^)]*)\): any;/,
-    'export function convertWithMetadata($1): WasmConversionResult;'
+    "export function convertWithMetadata($1): WasmConversionResult;",
   );
   content = content.replace(
     /export function convertBytesWithMetadata\(([^)]*)\): any;/,
-    'export function convertBytesWithMetadata($1): WasmConversionResult;'
+    "export function convertBytesWithMetadata($1): WasmConversionResult;",
   );
 }
 
-if (!content.includes('interface WasmConversionOptions')) {
+if (!content.includes("interface WasmConversionOptions")) {
   content += `\n${typeDefinitions}`;
 }
 
-fs.writeFileSync(dtsPath, content, 'utf8');
+fs.writeFileSync(dtsPath, content, "utf8");
 
 const jsDocTarget = fs.existsSync(bgPath) ? bgPath : entryPath;
-const typeImportSpecifier = './html_to_markdown_wasm';
+const typeImportSpecifier = "./html_to_markdown_wasm";
 patchJsDoc(jsDocTarget, typeImportSpecifier);
 
 // Fix package.json "files" field to include all necessary files
-const pkgJsonPath = path.join(distDir, 'package.json');
+const pkgJsonPath = path.join(distDir, "package.json");
 if (fs.existsSync(pkgJsonPath)) {
-  const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
+  const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, "utf8"));
 
   // Use glob patterns to ensure all generated files are included
-  pkgJson.files = [
-    '*.wasm',
-    '*.js',
-    '*.d.ts'
-  ];
+  pkgJson.files = ["*.wasm", "*.js", "*.d.ts"];
 
-  fs.writeFileSync(pkgJsonPath, JSON.stringify(pkgJson, null, 2) + '\n', 'utf8');
+  fs.writeFileSync(pkgJsonPath, JSON.stringify(pkgJson, null, 2) + "\n", "utf8");
   console.log(`[patch-bundler-entry] Updated package.json files field in ${distArg}`);
 }

@@ -16,7 +16,13 @@ name = "html_to_markdown_nif"
 crate-type = ["cdylib"]
 
 [dependencies]
-html-to-markdown-rs = { path = "../../../../crates/html-to-markdown", features = ["full", "metadata", "visitor", "serde", "inline-images"] }
+html-to-markdown-rs = { path = "../../../../crates/html-to-markdown", features = [
+  "full",
+  "metadata",
+  "visitor",
+  "serde",
+  "inline-images",
+] }
 rustler = "0.37"
 async-trait = "0.1"
 serde = { version = "1", features = ["derive"] }

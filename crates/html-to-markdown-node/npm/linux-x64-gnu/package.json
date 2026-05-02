@@ -1,37 +1,37 @@
 {
-	"name": "@kreuzberg/html-to-markdown-node-linux-x64-gnu",
-	"version": "3.4.0-rc.25",
-	"cpu": [
-		"x64"
-	],
-	"main": "html-to-markdown-node.linux-x64-gnu.node",
-	"files": [
-		"html-to-markdown-node.linux-x64-gnu.node"
-	],
-	"description": "High-performance HTML to Markdown converter - Node.js native bindings",
-	"keywords": [
-		"html",
-		"markdown",
-		"converter",
-		"rust",
-		"napi"
-	],
-	"author": "Na'aman Hirschfeld <naaman@kreuzberg.dev>",
-	"homepage": "https://kreuzberg.dev",
-	"license": "MIT",
-	"engines": {
-		"node": ">= 10"
-	},
-	"repository": "https://github.com/kreuzberg-dev/html-to-markdown",
-	"bugs": "https://github.com/kreuzberg-dev/html-to-markdown/issues",
-	"publishConfig": {
-		"registry": "https://registry.npmjs.org/",
-		"access": "public"
-	},
-	"os": [
-		"linux"
-	],
-	"libc": [
-		"glibc"
-	]
+  "name": "@kreuzberg/html-to-markdown-node-linux-x64-gnu",
+  "version": "3.4.0-rc.25",
+  "description": "High-performance HTML to Markdown converter - Node.js native bindings",
+  "keywords": [
+    "converter",
+    "html",
+    "markdown",
+    "napi",
+    "rust"
+  ],
+  "homepage": "https://kreuzberg.dev",
+  "bugs": "https://github.com/kreuzberg-dev/html-to-markdown/issues",
+  "license": "MIT",
+  "author": "Na'aman Hirschfeld <naaman@kreuzberg.dev>",
+  "repository": "https://github.com/kreuzberg-dev/html-to-markdown",
+  "files": [
+    "html-to-markdown-node.linux-x64-gnu.node"
+  ],
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "libc": [
+    "glibc"
+  ],
+  "main": "html-to-markdown-node.linux-x64-gnu.node",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "engines": {
+    "node": ">= 10"
+  }
 }

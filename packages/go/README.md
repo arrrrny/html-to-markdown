@@ -59,14 +59,11 @@
 High-performance HTML to Markdown converter with Go bindings to the Rust core library.
 Supports automatic downloading of prebuilt FFI libraries for Linux, macOS, and Windows with customizable caching.
 
-
 ## Installation
 
 ```bash
 go get github.com/kreuzberg-dev/html-to-markdown/packages/go/v3/htmltomarkdown
 ```
-
-
 
 Requires Go 1.25+. After installing the package, run `go generate` to automatically download the platform-specific FFI library:
 
@@ -78,15 +75,7 @@ This downloads the native library from GitHub releases and generates the necessa
 
 Alternatively, you can manually set `CGO_CFLAGS` and `CGO_LDFLAGS` environment variables if you prefer to manage the FFI library yourself.
 
-
-
-
-
 ## Performance Snapshot
-
-
-
-
 
 ## Quick Start
 
@@ -115,7 +104,6 @@ func main() {
     }
 }
 ```
-
 
 With conversion options:
 
@@ -148,11 +136,9 @@ func main() {
 }
 ```
 
-
 ## API Reference
 
 ### Core Function
-
 
 **`Convert(html string, options ...ConversionOptions) (ConversionResult, error)`**
 
@@ -164,8 +150,6 @@ markdown  := result.Content    // *string — converted Markdown
 metadata  := result.Metadata   // *Metadata — when ExtractMetadata: true
 tables    := result.Tables     // []TableData — when ExtractTables: true
 ```
-
-
 
 ### Options
 
@@ -187,18 +171,17 @@ The library supports converting HTML to [Djot](https://djot.net/), a lightweight
 
 ### Syntax Differences
 
-| Element | Markdown | Djot |
-|---------|----------|------|
-| Strong | `**text**` | `*text*` |
-| Emphasis | `*text*` | `_text_` |
-| Strikethrough | `~~text~~` | `{-text-}` |
-| Inserted/Added | N/A | `{+text+}` |
-| Highlighted | N/A | `{=text=}` |
-| Subscript | N/A | `~text~` |
-| Superscript | N/A | `^text^` |
+| Element        | Markdown   | Djot       |
+| -------------- | ---------- | ---------- |
+| Strong         | `**text**` | `*text*`   |
+| Emphasis       | `*text*`   | `_text_`   |
+| Strikethrough  | `~~text~~` | `{-text-}` |
+| Inserted/Added | N/A        | `{+text+}` |
+| Highlighted    | N/A        | `{=text=}` |
+| Subscript      | N/A        | `~text~`   |
+| Superscript    | N/A        | `^text^`   |
 
 ### Example Usage
-
 
 ```go
 import "github.com/kreuzberg-dev/html-to-markdown/packages/go/v2/htmltomarkdown"
@@ -212,13 +195,11 @@ markdown, _ := htmltomarkdown.Convert(html)
 // Note: Djot output format configuration is not yet supported in Go bindings
 ```
 
-
 Djot's extended syntax allows you to express more semantic meaning in lightweight text, making it useful for documents that require strikethrough, insertion tracking, or mathematical notation.
 
 ## Plain Text Output
 
 Set `output_format` to `"plain"` to strip all markup and return only visible text. This bypasses the Markdown conversion pipeline entirely for maximum speed.
-
 
 ```go
 import "github.com/kreuzberg-dev/html-to-markdown/packages/go/v2/htmltomarkdown"
@@ -229,15 +210,9 @@ plain, _ := htmltomarkdown.Convert(html, htmltomarkdown.WithOutputFormat("plain"
 // Result: "Title\n\nThis is bold and italic text."
 ```
 
-
 Plain text mode is useful for search indexing, text extraction, and feeding content to LLMs.
 
-
-
-
-
 ## Examples
-
 
 ## Links
 

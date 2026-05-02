@@ -94,6 +94,7 @@ Use `ConversionOptions.builder()` to construct, or `the default constructor` for
 | `infer_dimensions` | `bool` | `True` | Infer image dimensions from data. |
 | `max_depth` | `int | None` | `None` | Maximum DOM traversal depth. `None` means unlimited. When set, subtrees beyond this depth are silently truncated. |
 | `exclude_selectors` | `list[str]` | `[]` | CSS selectors for elements to exclude entirely (element + all content). Unlike `strip_tags` (which removes the tag wrapper but keeps children), excluded elements and all their descendants are dropped from the output. Supports any CSS selector that `tl` supports: tag names, `.class`, `#id`, `[attribute]`, etc. Invalid selectors are silently skipped at conversion time. Example: `vec![".cookie-banner".into(), "#ad-container".into(), "[role='complementary']".into()]` |
+| `visitor` | `HtmlVisitor(Protocol)` | `None` | Optional visitor for custom traversal logic. When set, the visitor's callbacks are invoked for matching HTML elements during conversion, allowing custom output, skipping, or HTML preservation. See `crate.visitor.HtmlVisitor`. |
 
 ---
 

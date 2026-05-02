@@ -1,39 +1,39 @@
 {
-	"name": "@kreuzberg/html-to-markdown",
-	"version": "3.4.0-rc.25",
-	"description": "High-performance HTML to Markdown converter",
-	"keywords": [
-		"converter",
-		"html",
-		"markdown"
-	],
-	"license": "MIT",
-	"author": "Kreuzberg Team",
-	"repository": "https://github.com/kreuzberg-dev/html-to-markdown",
-	"homepage": "https://kreuzberg.dev",
-	"bugs": "https://github.com/kreuzberg-dev/html-to-markdown/issues",
-	"files": [
-		"dist",
-		"README.md"
-	],
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"publishConfig": {
-		"access": "public",
-		"registry": "https://registry.npmjs.org/"
-	},
-	"scripts": {
-		"build": "tsc --project tsconfig.json",
-		"lint": "echo 'TypeScript type-checking requires native build; use task node:lint:check instead'",
-		"test": "node -e \"console.log('Add test command')\""
-	},
-	"dependencies": {
-		"@kreuzberg/html-to-markdown-node": "3.4.0-rc.18"
-	},
-	"devDependencies": {
-		"typescript": "^5.6.0"
-	},
-	"engines": {
-		"node": ">= 18"
-	}
+  "name": "@kreuzberg/html-to-markdown",
+  "version": "3.4.0-rc.25",
+  "description": "High-performance HTML to Markdown converter",
+  "keywords": [
+    "converter",
+    "html",
+    "markdown"
+  ],
+  "homepage": "https://kreuzberg.dev",
+  "bugs": "https://github.com/kreuzberg-dev/html-to-markdown/issues",
+  "license": "MIT",
+  "author": "Kreuzberg Team",
+  "repository": "https://github.com/kreuzberg-dev/html-to-markdown",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "lint": "echo 'TypeScript type-checking requires native build; use task node:lint:check instead'",
+    "test": "node -e \"console.log('Add test command')\""
+  },
+  "dependencies": {
+    "@kreuzberg/html-to-markdown-node": "3.4.0-rc.18"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">= 18"
+  }
 }

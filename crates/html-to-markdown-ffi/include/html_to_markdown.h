@@ -47,443 +47,17 @@ typedef struct HTMTableGrid HTMTableGrid;
 typedef struct HTMTextAnnotation HTMTextAnnotation;
 typedef struct HTMTextDirection HTMTextDirection;
 typedef struct HTMVisitResult HTMVisitResult;
+typedef struct HTMVisitorHandle HTMVisitorHandle;
 typedef struct HTMWarningKind HTMWarningKind;
 typedef struct HTMWhitespaceMode HTMWhitespaceMode;
 
 
 /**
- * Visit-result code: continue with default conversion.
+ * Rust-side bridge that holds a C vtable pointer and opaque `user_data`.
+ *
+ * Implements `HtmlVisitor` by forwarding calls through the vtable.
  */
-#define HTMHTM_VISIT_CONTINUE 0
-
-/**
- * Visit-result code: skip this element entirely (no output).
- */
-#define HTMHTM_VISIT_SKIP 1
-
-/**
- * Visit-result code: preserve the original HTML verbatim.
- */
-#define HTMHTM_VISIT_PRESERVE_HTML 2
-
-/**
- * Visit-result code: use `out_custom` / `out_len` as custom Markdown output.
- */
-#define HTMHTM_VISIT_CUSTOM 3
-
-/**
- * Visit-result code: abort conversion; `out_custom` contains the error message.
- */
-#define HTMHTM_VISIT_ERROR 4
-
-/**
- * Opaque handle wrapping a `HtmVisitorCallbacks` and implementing
- * the Rust `HtmlVisitor` trait.
- *
- * Allocate with `htm_visitor_create` and release with `htm_visitor_free`.
- * The handle must NOT outlive the `HtmVisitorCallbacks` it was created from.
- */
-typedef struct HTMHtmVisitor HTMHtmVisitor;
-
-/**
- * Opaque context passed to every C callback.
- *
- * Fields reflect `NodeContext` from the Rust core. All string pointers are
- * valid only for the duration of the callback invocation.
- */
-typedef struct HTMHtmNodeContext {
-  /**
-   * Coarse-grained node type tag (matches `NodeType` discriminant).
-   */
-  int32_t node_type;
-  /**
-   * Null-terminated tag name (e.g. `"div"`). Never null.
-   */
-  const char *tag_name;
-  /**
-   * Depth in the DOM tree (0 = root).
-   */
-  uintptr_t depth;
-  /**
-   * Index among siblings (0-based).
-   */
-  uintptr_t index_in_parent;
-  /**
-   * Null-terminated parent tag name, or null if root.
-   */
-  const char *parent_tag;
-  /**
-   * Non-zero if this element is treated as inline.
-   */
-  int32_t is_inline;
-} HTMHtmNodeContext;
-
-/**
- * C-facing callback struct for the visitor pattern.
- *
- * Populate the function-pointer fields you care about; leave the rest null.
- * The `user_data` pointer is forwarded unchanged to every callback — use it
- * to thread your own context through the conversion.
- *
- * # Field order
- *
- * The field order matches the Go binding's expected C layout exactly.
- *
- * # Callback return protocol
- *
- * Callbacks return an `i32` visit-result code.  When the code is
- * `HTM_VISIT_CUSTOM` (3) or `HTM_VISIT_ERROR` (4), the callback must also
- * write a heap-allocated, null-terminated string into `*out_custom` and set
- * `*out_len` to its byte length (excluding the null terminator).  The Rust
- * side will read the string and then call `free()` on the pointer.
- *
- * For all other codes `out_custom` and `out_len` are not written.
- *
- * # Callback signatures
- *
- * All callbacks share the same leading parameters:
- * ```c
- * fn(ctx, user_data, out_custom, out_len, ...) -> i32
- * ```
- * followed by method-specific parameters documented on each field.
- */
-typedef struct HTMHtmVisitorCallbacks {
-  /**
-   * Arbitrary caller context forwarded to every callback.
-   */
-  void *user_data;
-  /**
-   * Visit text nodes.
-   */
-  int32_t (*visit_text)(const struct HTMHtmNodeContext *ctx,
-                        void *user_data,
-                        const char *text,
-                        char **out_custom,
-                        uintptr_t *out_len);
-  /**
-   * Called before entering any element.
-   */
-  int32_t (*visit_element_start)(const struct HTMHtmNodeContext *ctx,
-                                 void *user_data,
-                                 char **out_custom,
-                                 uintptr_t *out_len);
-  /**
-   * Called after exiting any element; receives the default markdown output.
-   */
-  int32_t (*visit_element_end)(const struct HTMHtmNodeContext *ctx,
-                               void *user_data,
-                               const char *output,
-                               char **out_custom,
-                               uintptr_t *out_len);
-  /**
-   * Visit anchor links `<a href="...">`.\n    ///\n    /// `title` may be null.
-   */
-  int32_t (*visit_link)(const struct HTMHtmNodeContext *ctx,
-                        void *user_data,
-                        const char *href,
-                        const char *text,
-                        const char *title,
-                        char **out_custom,
-                        uintptr_t *out_len);
-  /**
-   * Visit images `<img src="...">`.\n    ///\n    /// `title` may be null.
-   */
-  int32_t (*visit_image)(const struct HTMHtmNodeContext *ctx,
-                         void *user_data,
-                         const char *src,
-                         const char *alt,
-                         const char *title,
-                         char **out_custom,
-                         uintptr_t *out_len);
-  /**
-   * Visit heading elements `<h1>`\u{2013}`<h6>`.\n    ///\n    /// `id` may be null.
-   */
-  int32_t (*visit_heading)(const struct HTMHtmNodeContext *ctx,
-                           void *user_data,
-                           uint32_t level,
-                           const char *text,
-                           const char *id,
-                           char **out_custom,
-                           uintptr_t *out_len);
-  /**
-   * Visit code blocks `<pre><code>`.\n    ///\n    /// `lang` may be null.
-   */
-  int32_t (*visit_code_block)(const struct HTMHtmNodeContext *ctx,
-                              void *user_data,
-                              const char *lang,
-                              const char *code,
-                              char **out_custom,
-                              uintptr_t *out_len);
-  /**
-   * Visit inline code `<code>`.
-   */
-  int32_t (*visit_code_inline)(const struct HTMHtmNodeContext *ctx,
-                               void *user_data,
-                               const char *code,
-                               char **out_custom,
-                               uintptr_t *out_len);
-  /**
-   * Visit list items `<li>`.
-   */
-  int32_t (*visit_list_item)(const struct HTMHtmNodeContext *ctx,
-                             void *user_data,
-                             int32_t ordered,
-                             const char *marker,
-                             const char *text,
-                             char **out_custom,
-                             uintptr_t *out_len);
-  /**
-   * Called before processing a list `<ul>` or `<ol>`.
-   */
-  int32_t (*visit_list_start)(const struct HTMHtmNodeContext *ctx,
-                              void *user_data,
-                              int32_t ordered,
-                              char **out_custom,
-                              uintptr_t *out_len);
-  /**
-   * Called after processing a list `</ul>` or `</ol>`.
-   */
-  int32_t (*visit_list_end)(const struct HTMHtmNodeContext *ctx,
-                            void *user_data,
-                            int32_t ordered,
-                            const char *output,
-                            char **out_custom,
-                            uintptr_t *out_len);
-  /**
-   * Called before processing a table `<table>`.
-   */
-  int32_t (*visit_table_start)(const struct HTMHtmNodeContext *ctx,
-                               void *user_data,
-                               char **out_custom,
-                               uintptr_t *out_len);
-  /**
-   * Visit table rows `<tr>`.\n    ///\n    /// Cells are passed as a null-terminated array of null-terminated strings.
-   */
-  int32_t (*visit_table_row)(const struct HTMHtmNodeContext *ctx,
-                             void *user_data,
-                             const char *const *cells,
-                             uintptr_t cell_count,
-                             int32_t is_header,
-                             char **out_custom,
-                             uintptr_t *out_len);
-  /**
-   * Called after processing a table `</table>`.
-   */
-  int32_t (*visit_table_end)(const struct HTMHtmNodeContext *ctx,
-                             void *user_data,
-                             const char *output,
-                             char **out_custom,
-                             uintptr_t *out_len);
-  /**
-   * Visit blockquote elements `<blockquote>`.
-   */
-  int32_t (*visit_blockquote)(const struct HTMHtmNodeContext *ctx,
-                              void *user_data,
-                              const char *content,
-                              uintptr_t depth,
-                              char **out_custom,
-                              uintptr_t *out_len);
-  /**
-   * Visit strong/bold elements `<strong>`, `<b>`.
-   */
-  int32_t (*visit_strong)(const struct HTMHtmNodeContext *ctx,
-                          void *user_data,
-                          const char *text,
-                          char **out_custom,
-                          uintptr_t *out_len);
-  /**
-   * Visit emphasis/italic elements `<em>`, `<i>`.
-   */
-  int32_t (*visit_emphasis)(const struct HTMHtmNodeContext *ctx,
-                            void *user_data,
-                            const char *text,
-                            char **out_custom,
-                            uintptr_t *out_len);
-  /**
-   * Visit strikethrough elements `<s>`, `<del>`, `<strike>`.
-   */
-  int32_t (*visit_strikethrough)(const struct HTMHtmNodeContext *ctx,
-                                 void *user_data,
-                                 const char *text,
-                                 char **out_custom,
-                                 uintptr_t *out_len);
-  /**
-   * Visit underline elements `<u>`, `<ins>`.
-   */
-  int32_t (*visit_underline)(const struct HTMHtmNodeContext *ctx,
-                             void *user_data,
-                             const char *text,
-                             char **out_custom,
-                             uintptr_t *out_len);
-  /**
-   * Visit subscript elements `<sub>`.
-   */
-  int32_t (*visit_subscript)(const struct HTMHtmNodeContext *ctx,
-                             void *user_data,
-                             const char *text,
-                             char **out_custom,
-                             uintptr_t *out_len);
-  /**
-   * Visit superscript elements `<sup>`.
-   */
-  int32_t (*visit_superscript)(const struct HTMHtmNodeContext *ctx,
-                               void *user_data,
-                               const char *text,
-                               char **out_custom,
-                               uintptr_t *out_len);
-  /**
-   * Visit mark/highlight elements `<mark>`.
-   */
-  int32_t (*visit_mark)(const struct HTMHtmNodeContext *ctx,
-                        void *user_data,
-                        const char *text,
-                        char **out_custom,
-                        uintptr_t *out_len);
-  /**
-   * Visit line break elements `<br>`.
-   */
-  int32_t (*visit_line_break)(const struct HTMHtmNodeContext *ctx,
-                              void *user_data,
-                              char **out_custom,
-                              uintptr_t *out_len);
-  /**
-   * Visit horizontal rule elements `<hr>`.
-   */
-  int32_t (*visit_horizontal_rule)(const struct HTMHtmNodeContext *ctx,
-                                   void *user_data,
-                                   char **out_custom,
-                                   uintptr_t *out_len);
-  /**
-   * Visit custom/unknown elements.
-   */
-  int32_t (*visit_custom_element)(const struct HTMHtmNodeContext *ctx,
-                                  void *user_data,
-                                  const char *tag_name,
-                                  const char *html,
-                                  char **out_custom,
-                                  uintptr_t *out_len);
-  /**
-   * Visit definition list `<dl>`.
-   */
-  int32_t (*visit_definition_list_start)(const struct HTMHtmNodeContext *ctx,
-                                         void *user_data,
-                                         char **out_custom,
-                                         uintptr_t *out_len);
-  /**
-   * Visit definition term `<dt>`.
-   */
-  int32_t (*visit_definition_term)(const struct HTMHtmNodeContext *ctx,
-                                   void *user_data,
-                                   const char *text,
-                                   char **out_custom,
-                                   uintptr_t *out_len);
-  /**
-   * Visit definition description `<dd>`.
-   */
-  int32_t (*visit_definition_description)(const struct HTMHtmNodeContext *ctx,
-                                          void *user_data,
-                                          const char *text,
-                                          char **out_custom,
-                                          uintptr_t *out_len);
-  /**
-   * Called after processing a definition list `</dl>`.
-   */
-  int32_t (*visit_definition_list_end)(const struct HTMHtmNodeContext *ctx,
-                                       void *user_data,
-                                       const char *output,
-                                       char **out_custom,
-                                       uintptr_t *out_len);
-  /**
-   * Visit form elements `<form>`.\n    ///\n    /// `action` and `method` may be null.
-   */
-  int32_t (*visit_form)(const struct HTMHtmNodeContext *ctx,
-                        void *user_data,
-                        const char *action,
-                        const char *method,
-                        char **out_custom,
-                        uintptr_t *out_len);
-  /**
-   * Visit input elements `<input>`.\n    ///\n    /// `name` and `value` may be null.
-   */
-  int32_t (*visit_input)(const struct HTMHtmNodeContext *ctx,
-                         void *user_data,
-                         const char *input_type,
-                         const char *name,
-                         const char *value,
-                         char **out_custom,
-                         uintptr_t *out_len);
-  /**
-   * Visit button elements `<button>`.
-   */
-  int32_t (*visit_button)(const struct HTMHtmNodeContext *ctx,
-                          void *user_data,
-                          const char *text,
-                          char **out_custom,
-                          uintptr_t *out_len);
-  /**
-   * Visit audio elements `<audio>`.\n    ///\n    /// `src` may be null.
-   */
-  int32_t (*visit_audio)(const struct HTMHtmNodeContext *ctx,
-                         void *user_data,
-                         const char *src,
-                         char **out_custom,
-                         uintptr_t *out_len);
-  /**
-   * Visit video elements `<video>`.\n    ///\n    /// `src` may be null.
-   */
-  int32_t (*visit_video)(const struct HTMHtmNodeContext *ctx,
-                         void *user_data,
-                         const char *src,
-                         char **out_custom,
-                         uintptr_t *out_len);
-  /**
-   * Visit iframe elements `<iframe>`.\n    ///\n    /// `src` may be null.
-   */
-  int32_t (*visit_iframe)(const struct HTMHtmNodeContext *ctx,
-                          void *user_data,
-                          const char *src,
-                          char **out_custom,
-                          uintptr_t *out_len);
-  /**
-   * Visit details elements `<details>`.\n    ///\n    /// `open` is non-zero when the `open` attribute is present.
-   */
-  int32_t (*visit_details)(const struct HTMHtmNodeContext *ctx,
-                           void *user_data,
-                           int32_t open,
-                           char **out_custom,
-                           uintptr_t *out_len);
-  /**
-   * Visit summary elements `<summary>`.
-   */
-  int32_t (*visit_summary)(const struct HTMHtmNodeContext *ctx,
-                           void *user_data,
-                           const char *text,
-                           char **out_custom,
-                           uintptr_t *out_len);
-  /**
-   * Called before processing a figure `<figure>`.
-   */
-  int32_t (*visit_figure_start)(const struct HTMHtmNodeContext *ctx,
-                                void *user_data,
-                                char **out_custom,
-                                uintptr_t *out_len);
-  /**
-   * Visit figcaption elements `<figcaption>`.
-   */
-  int32_t (*visit_figcaption)(const struct HTMHtmNodeContext *ctx,
-                              void *user_data,
-                              const char *text,
-                              char **out_custom,
-                              uintptr_t *out_len);
-  /**
-   * Called after processing a figure `</figure>`.
-   */
-  int32_t (*visit_figure_end)(const struct HTMHtmNodeContext *ctx,
-                              void *user_data,
-                              const char *output,
-                              char **out_custom,
-                              uintptr_t *out_len);
-} HTMHtmVisitorCallbacks;
+typedef struct HTMHtmHtmlVisitorBridge HTMHtmHtmlVisitorBridge;
 
 /**
  * Return the last error code (0 means no error).
@@ -961,14 +535,6 @@ char *htm_html_metadata_images(const HTMHtmlMetadata *ptr);
 char *htm_html_metadata_structured_data(const HTMHtmlMetadata *ptr);
 
 /**
- * Create a `ConversionOptions` from a JSON string. Returns null on failure.
- * # Safety
- * JSON string must be valid UTF-8 and null-terminated.
- * Returned handle must be freed with `htm_conversion_options_free`.
- */
-HTMConversionOptions *htm_conversion_options_from_json(const char *json);
-
-/**
  * Serialize a `ConversionOptions` to a JSON string. Returns null on failure.
  * # Safety
  * `ptr` must be a valid, non-null pointer returned by a `htm` function.
@@ -1264,6 +830,13 @@ uintptr_t htm_conversion_options_max_depth(const HTMConversionOptions *ptr);
 char *htm_conversion_options_exclude_selectors(const HTMConversionOptions *ptr);
 
 /**
+ * Get the `visitor` field from a `ConversionOptions`.
+ * # Safety
+ * Pointer must be a valid handle returned by this library.
+ */
+HTMVisitorHandle *htm_conversion_options_visitor(const HTMConversionOptions *ptr);
+
+/**
  * # Safety
  * Caller must ensure all pointer arguments are valid or null.
  * Returned pointers must be freed with the appropriate free function.
@@ -1344,6 +917,15 @@ HTMConversionOptionsBuilder *htm_conversion_options_builder_keep_inline_images_i
  */
 HTMConversionOptionsBuilder *htm_conversion_options_builder_exclude_selectors(HTMConversionOptionsBuilder *this_,
                                                                               const char *selectors);
+
+/**
+ * Set the visitor used during conversion.
+ * # Safety
+ * Caller must ensure all pointer arguments are valid or null.
+ * Returned pointers must be freed with the appropriate free function.
+ */
+HTMConversionOptionsBuilder *htm_conversion_options_builder_visitor(HTMConversionOptionsBuilder *this_,
+                                                                    const HTMVisitorHandle *visitor);
 
 /**
  * Set the pre-processing options applied to the HTML before conversion.
@@ -1656,6 +1238,13 @@ uintptr_t htm_conversion_options_update_max_depth(const HTMConversionOptionsUpda
  * Pointer must be a valid handle returned by this library.
  */
 char *htm_conversion_options_update_exclude_selectors(const HTMConversionOptionsUpdate *ptr);
+
+/**
+ * Get the `visitor` field from a `ConversionOptionsUpdate`.
+ * # Safety
+ * Pointer must be a valid handle returned by this library.
+ */
+HTMVisitorHandle *htm_conversion_options_update_visitor(const HTMConversionOptionsUpdate *ptr);
 
 /**
  * Create a `PreprocessingOptions` from a JSON string. Returns null on failure.
@@ -2188,6 +1777,13 @@ char *htm_processing_warning_message(const HTMProcessingWarning *ptr);
 HTMWarningKind *htm_processing_warning_kind(const HTMProcessingWarning *ptr);
 
 /**
+ * Free a `VisitorHandle` handle.
+ * # Safety
+ * Pointer must have been returned by this library, or be null.
+ */
+void htm_visitor_handle_free(HTMVisitorHandle *ptr);
+
+/**
  * Create a `NodeContext` from a JSON string. Returns null on failure.
  * # Safety
  * JSON string must be valid UTF-8 and null-terminated.
@@ -2545,16 +2141,39 @@ void htm_link_type_free(HTMLinkType *ptr);
 char *htm_link_type_to_json(const HTMLinkType *ptr);
 
 /**
+ * Attach a vtable visitor bridge to a `ConversionOptions` options struct.
+ *
+ * The `HtmHtmlVisitorBridge` encapsulates a set of C function pointers that receive visit
+ * callbacks during HTML-to-Markdown conversion.  Call this setter before `htm_convert`
+ * to activate visitor callbacks.  Pass `visitor = null` to clear a previously attached visitor.
+ *
+ * Neither pointer is consumed: the caller retains ownership of both `options` and `visitor`
+ * and must free them independently after conversion completes.
+ *
+ * # Safety
+ *
+ * `options` must be a non-null pointer returned by `htm_conversion_options_new` (or
+ * equivalent), valid for write access.  `visitor` must be a non-null pointer returned by
+ * `htm_htm_html_visitor_bridge_new`, or null.  Both must remain valid for the duration of any
+ * subsequent `htm_convert` call.
+ */
+void htm_options_set_visitor(HTMConversionOptions *options,
+                             struct HTMHtmHtmlVisitorBridge *visitor);
+
+/**
  * Convert HTML to Markdown.
  *
  * Returns a heap-allocated [`ConversionResult`] on success, or null on failure.
  * Check `htm_last_error_code` / `htm_last_error_context` for error details.
  * The returned pointer must be freed with `htm_conversion_result_free`.
  *
+ * If a visitor was attached to `options` via `htm_options_set_visitor`, it will
+ * receive callbacks during conversion.
+ *
  * # Arguments
  *
  * - `html`: null-terminated, UTF-8 HTML input. Must not be null.
- * - `options`: optional conversion options; pass null for defaults.
+ * - `options`: optional conversion options (with optional embedded visitor); pass null for defaults.
  *
  * # Safety
  *
@@ -2564,63 +2183,5 @@ char *htm_link_type_to_json(const HTMLinkType *ptr);
  */
 HTMConversionResult *htm_convert(const char *html,
                                  const HTMConversionOptions *options);
-
-/**
- * Create a new visitor handle from a callbacks struct.
- *
- * The returned handle must be freed with `htm_visitor_free`.
- * The `HtmVisitorCallbacks` struct is **copied** into the handle;
- * the caller may free it after this call returns.
- *
- * Returns null on allocation failure.
- *
- * # Safety
- *
- * `callbacks` must point to a valid, fully initialised `HtmVisitorCallbacks`.
- * `user_data` (embedded in the struct) must remain valid and accessible from
- * any thread that calls `htm_convert_with_visitor` until after
- * `htm_visitor_free` is called.
- */
-struct HTMHtmVisitor *htm_visitor_create(const struct HTMHtmVisitorCallbacks *callbacks);
-
-/**
- * Free a visitor handle previously returned by `htm_visitor_create`.
- *
- * After this call the pointer is invalid and must not be used.
- *
- * # Safety
- *
- * `visitor` must have been returned by `htm_visitor_create`, or be null.
- * Passing a null pointer is safe and has no effect.
- */
-void htm_visitor_free(struct HTMHtmVisitor *visitor);
-
-/**
- * Convert HTML to Markdown using a custom visitor.
- *
- * Equivalent to `htm_convert` but threads the provided visitor through
- * the conversion pipeline so that every `visit_*` callback is invoked during
- * processing.
- *
- * Returns a heap-allocated null-terminated Markdown string on success, or
- * null on failure (check `htm_last_error_code` / `htm_last_error_context`).
- * The returned pointer must be freed with `htm_free_string`.
- *
- * # Arguments
- *
- * - `html`: null-terminated, UTF-8 HTML input. Must not be null.
- * - `options`: optional conversion options; pass null for defaults.
- * - `visitor`: optional visitor handle from `htm_visitor_create`; pass
- *   null for default conversion (equivalent to `htm_convert`).
- *
- * # Safety
- *
- * All pointer arguments must be valid or null as described above.
- * The `visitor` pointer (and its embedded `user_data`) must remain valid for
- * the duration of this call.
- */
-char *htm_convert_with_visitor(const char *html,
-                               const HTMConversionOptions *options,
-                               struct HTMHtmVisitor *visitor);
 
 #endif  /* HTM_H */
