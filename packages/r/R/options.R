@@ -1,39 +1,50 @@
-#' Create conversion options for html-to-markdown.
+#' Create a ConversionOptions list for HTML-to-Markdown conversion
 #'
-#' Returns a named list of conversion options to pass to conversion functions.
-#' All parameters are optional; NULL values are omitted.
+#' All parameters default to `NULL`, which means the Rust default is used.
+#' Pass named arguments to override individual settings.
 #'
-#' @param heading_style Style for headings: "atx", "atx_closed", or "underlined".
-#' @param list_indent_type Indent type for lists: "spaces" or "tabs".
-#' @param list_indent_width Number of spaces/tabs per indent level.
-#' @param bullets Characters to use for bullet points.
-#' @param strong_em_symbol Character for strong/emphasis: "*" or "_".
-#' @param escape_asterisks Whether to escape asterisks.
-#' @param escape_underscores Whether to escape underscores.
-#' @param escape_misc Whether to escape miscellaneous characters.
-#' @param escape_ascii Whether to escape ASCII characters.
-#' @param code_language Default language for code blocks.
-#' @param encoding Input encoding (e.g., "utf-8").
-#' @param autolinks Whether to use autolinks for URLs.
-#' @param default_title Whether to use default title attributes.
-#' @param keep_inline_images_in Tags to preserve inline images in.
-#' @param br_in_tables Whether to use br tags in table cells.
-#' @param highlight_style Highlight style: "double_equal", "html", "bold", "none".
-#' @param extract_metadata Whether to extract metadata.
-#' @param whitespace_mode Whitespace handling: "normalized" or "strict".
-#' @param strip_newlines Whether to strip newlines.
-#' @param wrap Whether to wrap text.
-#' @param wrap_width Maximum line width for wrapping.
-#' @param strip_tags Tags to strip from output.
-#' @param preserve_tags Tags to preserve in output.
-#' @param convert_as_inline Whether to convert as inline.
-#' @param sub_symbol Symbol for subscript.
-#' @param sup_symbol Symbol for superscript.
-#' @param newline_style Newline style: "spaces" or "backslash".
-#' @param code_block_style Code block style: "indented", "backticks", or "tildes".
-#' @param preprocessing Named list with preprocessing options.
-#' @param debug Whether to enable debug output.
-#' @return A named list of conversion options.
+#' @param heading_style Heading style to use in Markdown output (ATX `#` or Setext underline)
+#' @param list_indent_type How to indent nested list items (spaces or tab)
+#' @param list_indent_width Number of spaces (or tabs) to use for each level of list indentation
+#' @param bullets Bullet character(s) to use for unordered list items (e.g. `"-"`, `"*"`)
+#' @param strong_em_symbol Character used for bold/italic emphasis markers (`*` or `_`)
+#' @param escape_asterisks Escape `*` characters in plain text to avoid unintended bold/italic
+#' @param escape_underscores Escape `_` characters in plain text to avoid unintended bold/italic
+#' @param escape_misc Escape miscellaneous Markdown metacharacters (`[]()#` etc.) in plain text
+#' @param escape_ascii Escape ASCII characters that have special meaning in certain Markdown dialects
+#' @param code_language Default language annotation for fenced code blocks that have no language hint
+#' @param autolinks Automatically convert bare URLs into Markdown autolinks
+#' @param default_title Emit a default title when no `<title>` tag is present
+#' @param br_in_tables Render `<br>` elements inside table cells as literal line breaks
+#' @param highlight_style Style used for `<mark>` / highlighted text (e.g. `==text==`)
+#' @param extract_metadata Extract `<meta>` and `<head>` information into the result metadata
+#' @param whitespace_mode Controls how whitespace is normalised during conversion
+#' @param strip_newlines Strip all newlines from the output, producing a single-line result
+#' @param wrap Wrap long lines at [`wrap_width`](Self::wrap_width) characters
+#' @param wrap_width Maximum line width when [`wrap`](Self::wrap) is enabled (default `80`)
+#' @param convert_as_inline Treat the entire document as inline content (no block-level wrappers)
+#' @param sub_symbol Markdown notation for subscript text (e.g. `"~"`)
+#' @param sup_symbol Markdown notation for superscript text (e.g. `"^"`)
+#' @param newline_style How to encode hard line breaks (`<br>`) in Markdown
+#' @param code_block_style Style used for fenced code blocks (backticks or tilde)
+#' @param keep_inline_images_in HTML tag names whose `<img>` children are kept inline instead of block
+#' @param preprocessing Pre-processing options applied to the HTML before conversion
+#' @param encoding Expected character encoding of the input HTML (default `"utf-8"`)
+#' @param debug Emit debug information during conversion
+#' @param strip_tags HTML tag names whose content is stripped from the output entirely
+#' @param preserve_tags HTML tag names that are preserved verbatim in the output
+#' @param skip_images Skip conversion of `<img>` elements (omit images from output)
+#' @param link_style Link rendering style (inline or reference)
+#' @param output_format Target output format (Markdown, plain text, etc.)
+#' @param include_document_structure Include structured document tree in result
+#' @param extract_images Extract inline images from data URIs and SVGs
+#' @param max_image_size Maximum decoded image size in bytes (default 5MB)
+#' @param capture_svg Capture SVG elements as images
+#' @param infer_dimensions Infer image dimensions from data
+#' @param max_depth Maximum DOM traversal depth. `None` means unlimited
+#' @param exclude_selectors CSS selectors for elements to exclude entirely (element + all content)
+#' @param visitor Optional visitor for custom traversal logic
+#' @return A named list suitable for the `options` argument of [convert()].
 #' @export
 conversion_options <- function(
   heading_style = NULL,
@@ -46,10 +57,8 @@ conversion_options <- function(
   escape_misc = NULL,
   escape_ascii = NULL,
   code_language = NULL,
-  encoding = NULL,
   autolinks = NULL,
   default_title = NULL,
-  keep_inline_images_in = NULL,
   br_in_tables = NULL,
   highlight_style = NULL,
   extract_metadata = NULL,
@@ -57,18 +66,30 @@ conversion_options <- function(
   strip_newlines = NULL,
   wrap = NULL,
   wrap_width = NULL,
-  strip_tags = NULL,
-  preserve_tags = NULL,
   convert_as_inline = NULL,
   sub_symbol = NULL,
   sup_symbol = NULL,
   newline_style = NULL,
   code_block_style = NULL,
+  keep_inline_images_in = NULL,
   preprocessing = NULL,
-  debug = NULL
+  encoding = NULL,
+  debug = NULL,
+  strip_tags = NULL,
+  preserve_tags = NULL,
+  skip_images = NULL,
+  link_style = NULL,
+  output_format = NULL,
+  include_document_structure = NULL,
+  extract_images = NULL,
+  max_image_size = NULL,
+  capture_svg = NULL,
+  infer_dimensions = NULL,
+  max_depth = NULL,
+  exclude_selectors = NULL,
+  visitor = NULL
 ) {
   opts <- list()
-
   if (!is.null(heading_style)) opts$heading_style <- heading_style
   if (!is.null(list_indent_type)) opts$list_indent_type <- list_indent_type
   if (!is.null(list_indent_width)) opts$list_indent_width <- as.integer(list_indent_width)
@@ -79,10 +100,8 @@ conversion_options <- function(
   if (!is.null(escape_misc)) opts$escape_misc <- escape_misc
   if (!is.null(escape_ascii)) opts$escape_ascii <- escape_ascii
   if (!is.null(code_language)) opts$code_language <- code_language
-  if (!is.null(encoding)) opts$encoding <- encoding
   if (!is.null(autolinks)) opts$autolinks <- autolinks
   if (!is.null(default_title)) opts$default_title <- default_title
-  if (!is.null(keep_inline_images_in)) opts$keep_inline_images_in <- keep_inline_images_in
   if (!is.null(br_in_tables)) opts$br_in_tables <- br_in_tables
   if (!is.null(highlight_style)) opts$highlight_style <- highlight_style
   if (!is.null(extract_metadata)) opts$extract_metadata <- extract_metadata
@@ -90,15 +109,27 @@ conversion_options <- function(
   if (!is.null(strip_newlines)) opts$strip_newlines <- strip_newlines
   if (!is.null(wrap)) opts$wrap <- wrap
   if (!is.null(wrap_width)) opts$wrap_width <- as.integer(wrap_width)
-  if (!is.null(strip_tags)) opts$strip_tags <- strip_tags
-  if (!is.null(preserve_tags)) opts$preserve_tags <- preserve_tags
   if (!is.null(convert_as_inline)) opts$convert_as_inline <- convert_as_inline
   if (!is.null(sub_symbol)) opts$sub_symbol <- sub_symbol
   if (!is.null(sup_symbol)) opts$sup_symbol <- sup_symbol
   if (!is.null(newline_style)) opts$newline_style <- newline_style
   if (!is.null(code_block_style)) opts$code_block_style <- code_block_style
+  if (!is.null(keep_inline_images_in)) opts$keep_inline_images_in <- keep_inline_images_in
   if (!is.null(preprocessing)) opts$preprocessing <- preprocessing
+  if (!is.null(encoding)) opts$encoding <- encoding
   if (!is.null(debug)) opts$debug <- debug
-
+  if (!is.null(strip_tags)) opts$strip_tags <- strip_tags
+  if (!is.null(preserve_tags)) opts$preserve_tags <- preserve_tags
+  if (!is.null(skip_images)) opts$skip_images <- skip_images
+  if (!is.null(link_style)) opts$link_style <- link_style
+  if (!is.null(output_format)) opts$output_format <- output_format
+  if (!is.null(include_document_structure)) opts$include_document_structure <- include_document_structure
+  if (!is.null(extract_images)) opts$extract_images <- extract_images
+  if (!is.null(max_image_size)) opts$max_image_size <- as.integer(max_image_size)
+  if (!is.null(capture_svg)) opts$capture_svg <- capture_svg
+  if (!is.null(infer_dimensions)) opts$infer_dimensions <- infer_dimensions
+  if (!is.null(max_depth)) opts$max_depth <- as.integer(max_depth)
+  if (!is.null(exclude_selectors)) opts$exclude_selectors <- exclude_selectors
+  if (!is.null(visitor)) opts$visitor <- visitor
   opts
 }
