@@ -233,7 +233,7 @@ e2e = "cd e2e/rust && cargo test"
 [crates.test.c]
 precondition = "command -v make >/dev/null 2>&1"
 before = "cargo build --release -p html-to-markdown-ffi"
-e2e = "cd e2e/c && make clean && make && DYLD_LIBRARY_PATH=../../target/release ./test_runner"
+e2e = "cd e2e/c && make clean && make && DYLD_LIBRARY_PATH=../../target/release LD_LIBRARY_PATH=../../target/release ./run_tests"
 
 [crates.build_commands.ruby]
 precondition = "command -v cargo >/dev/null 2>&1"

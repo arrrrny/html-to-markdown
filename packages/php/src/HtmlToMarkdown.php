@@ -38,14 +38,12 @@ final class HtmlToMarkdown
      *
      * @param string $html
      * @param ?ConversionOptions $options
-     * @return string
+     * @return ConversionResult
      * @throws \HtmlToMarkdown\HtmlToMarkdownException
      */
-    public static function convert(string $html, ?ConversionOptions $options = null): string
+    public static function convert(string $html, ?ConversionOptions $options = null): ConversionResult
     {
-        $result = \HtmlToMarkdown\HtmlToMarkdownApi::convert($html, $options); // delegate to native extension class
-        // Extract content from result object to match result_is_simple=true behavior
-        return $result->content ?? '';
+        return \HtmlToMarkdown\HtmlToMarkdownApi::convert($html, $options); // delegate to native extension class
     }
 
 }
