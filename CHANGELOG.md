@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.4.0-rc.33] - 2026-05-07
+
+### Fixed
+
+- **rc.32 typescript meta still shipped with empty `dependencies`** — the Bash `node -e '...' PKG_VERSION="$version"` invocation passed `PKG_VERSION` as a positional argument (`process.argv[2]`), not as an env var, so the script wrote `undefined` for the dep value, which `JSON.stringify` dropped → `dependencies: {}`. Moved the env assignment in front of the command (`PKG_VERSION="$version" node -e '...'`) and added a defensive check.
+
+### Verified by smoke tests against rc.32
+
+- ✅ Python (3/3)
+- ✅ Rust (3/3)
+- ✅ Ruby (3/3 — `arm64-darwin` gem)
+
 ## [3.4.0-rc.32] - 2026-05-07
 
 ### Fixed

@@ -12,20 +12,25 @@ pnpm exec tsc --project tsconfig.json
 # installable outside this monorepo. pnpm publish would do this automatically
 # but `npm publish` (used by kreuzberg-dev/actions/publish-npm) does not.
 version="$(node -p "require('./package.json').version")"
-node -e '
+PKG_VERSION="$version" node -e '
   const fs = require("node:fs");
   const path = "package.json";
   const pkg = JSON.parse(fs.readFileSync(path, "utf8"));
+  const ver = process.env.PKG_VERSION;
+  if (!ver) {
+    console.error("PKG_VERSION env not set");
+    process.exit(1);
+  }
   for (const field of ["dependencies", "peerDependencies", "optionalDependencies"]) {
     if (pkg[field]) {
       for (const [name, spec] of Object.entries(pkg[field])) {
         if (typeof spec === "string" && spec.startsWith("workspace:")) {
-          pkg[field][name] = process.env.PKG_VERSION;
+          pkg[field][name] = ver;
         }
       }
     }
   }
   fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + "\n");
-' PKG_VERSION="$version"
+'
 
 echo "TypeScript wrapper package built; workspace:* rewritten to ${version}"
