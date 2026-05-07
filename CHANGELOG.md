@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.4.0-rc.26] - 2026-05-07
+
 ### Fixed
 
 - **Visitor element start/end sequence for hyphenated tags (#331)** — the `repair_with_html5ever` fallback (triggered when input contains custom-element / hyphenated tag names) re-parsed the document under HTML5 semantics, which discard XML-style self-closing on unknown elements. As a result, `<ac:parameter ... />` was treated as an open tag and subsequent siblings nested inside it, breaking the visitor's pre-order/post-order start/end pairing. The repair path now pre-expands XML-style self-closing tags on non-void elements to explicit open+close pairs before the HTML5 parse, so visitor events remain correctly paired for hyphenated/namespaced custom tags.
@@ -18,6 +20,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   wrapper was passing a `ConversionOptions` object to the FFI, but the generated Rust function
   expects `Option<String>` (JSON). The wrapper now serialises the options hash to JSON before
   crossing the FFI boundary, matching what `serde_json::from_str` expects on the Rust side.
+
+- **PHP visitor marshaling** — visitor callbacks now correctly marshal arguments and handle array return values; `setVisitor()` method added to `ConversionOptions`.
+
+- **Elixir metadata serialization** — metadata maps now serialize as JSON instead of Elixir debug format.
+
+- **WASM Vitest environment** — WASM module loading now correctly handles Node.js module format in Vitest test environments.
+
+- **R e2e result wrapping** — `result_is_r_list` configured to suppress `jsonlite` double-wrapping of conversion results.
+
+- **Ruby `rb-sys` build isolation** — fixed panics during `bundle exec rake compile` by preventing rb-sys from being invoked via bundler exec in certain environments.
+
+- **Java pom.xml** — removed duplicate `jspecify` dependency entry introduced during dependabot merge.
+
+### Changed
+
+- **pnpm v11** — migrated from pnpm v10 to v11; updated `pnpm-workspace.yaml` with `onlyBuiltDependencies: [esbuild]` and `ignoredBuiltDependencies: [wasm-pack]` for the new opt-in build script policy.
+
+- **Dependencies updated** — bumped `org.jetbrains:annotations` 26.0.0 → 26.1.0 and other cross-language dependency updates via `task update` / `task upgrade`.
 
 ## [3.3.3] - 2026-04-23
 
