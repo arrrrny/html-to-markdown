@@ -107,9 +107,7 @@ def format_dependency(name: str, dep_spec: object) -> str:
     return f'{name} = "{dep_spec}"'
 
 
-def replace_workspace_deps_in_toml(
-    toml_path: Path, workspace_deps: dict[str, object]
-) -> None:
+def replace_workspace_deps_in_toml(toml_path: Path, workspace_deps: dict[str, object]) -> None:
     """Replace workspace = true with explicit versions in a Cargo.toml file."""
     with open(toml_path) as f:
         content = f.read()
@@ -117,15 +115,11 @@ def replace_workspace_deps_in_toml(
     for name, dep_spec in workspace_deps.items():
         # Dotted key: name.workspace = true
         pattern0 = rf"^{re.escape(name)}\.workspace = true$"
-        content = re.sub(
-            pattern0, format_dependency(name, dep_spec), content, flags=re.MULTILINE
-        )
+        content = re.sub(pattern0, format_dependency(name, dep_spec), content, flags=re.MULTILINE)
 
         # Simple: name = { workspace = true }
         pattern1 = rf"^{re.escape(name)} = \{{ workspace = true \}}$"
-        content = re.sub(
-            pattern1, format_dependency(name, dep_spec), content, flags=re.MULTILINE
-        )
+        content = re.sub(pattern1, format_dependency(name, dep_spec), content, flags=re.MULTILINE)
 
         # Complex: name = { workspace = true, ... }
         def replace_with_fields(match: re.Match[str]) -> str:
@@ -197,9 +191,7 @@ def replace_workspace_deps_in_toml(
             return f"{name} = {{ {merged_spec} }}"
 
         pattern2 = rf"^{re.escape(name)} = \{{ workspace = true, (.+?) \}}$"
-        content = re.sub(
-            pattern2, replace_with_fields, content, flags=re.MULTILINE | re.DOTALL
-        )
+        content = re.sub(pattern2, replace_with_fields, content, flags=re.MULTILINE | re.DOTALL)
 
     with open(toml_path, "w") as f:
         f.write(content)
@@ -228,13 +220,13 @@ members = [{members_str}]
 resolver = "2"
 
 [workspace.package]
-version = "{metadata['version']}"
-edition = "{metadata['edition']}"
-rust-version = "{metadata['rust-version']}"
+version = "{metadata["version"]}"
+edition = "{metadata["edition"]}"
+rust-version = "{metadata["rust-version"]}"
 authors = [{authors_str}]
-license = "{metadata['license']}"
-repository = "{metadata['repository']}"
-homepage = "{metadata['homepage']}"
+license = "{metadata["license"]}"
+repository = "{metadata["repository"]}"
+homepage = "{metadata["homepage"]}"
 
 [workspace.dependencies]
 {deps_str}

@@ -35,14 +35,11 @@ fn json_to_robj(value: &serde_json::Value) -> Robj {
     }
 }
 
-#[cfg(feature = "metadata")]
 use html_to_markdown_rs::metadata::{
     DocumentMetadata, HeaderMetadata, HtmlMetadata, ImageMetadata, LinkMetadata, StructuredData,
 };
-#[cfg(feature = "metadata")]
 use std::collections::HashMap;
 
-#[cfg(feature = "metadata")]
 /// Convert HtmlMetadata into an R list.
 pub fn metadata_to_robj(metadata: HtmlMetadata) -> Robj {
     list!(
@@ -56,7 +53,6 @@ pub fn metadata_to_robj(metadata: HtmlMetadata) -> Robj {
     .into()
 }
 
-#[cfg(feature = "metadata")]
 fn document_metadata_to_robj(doc: DocumentMetadata) -> Robj {
     list!(
         title = option_to_robj(doc.title),
@@ -74,7 +70,6 @@ fn document_metadata_to_robj(doc: DocumentMetadata) -> Robj {
     .into()
 }
 
-#[cfg(feature = "metadata")]
 fn header_metadata_to_robj(header: HeaderMetadata) -> Robj {
     list!(
         level = header.level as i32,
@@ -86,7 +81,6 @@ fn header_metadata_to_robj(header: HeaderMetadata) -> Robj {
     .into()
 }
 
-#[cfg(feature = "metadata")]
 fn link_metadata_to_robj(link: LinkMetadata) -> Robj {
     list!(
         href = link.href,
@@ -99,7 +93,6 @@ fn link_metadata_to_robj(link: LinkMetadata) -> Robj {
     .into()
 }
 
-#[cfg(feature = "metadata")]
 fn image_metadata_to_robj(image: ImageMetadata) -> Robj {
     list!(
         src = image.src,
@@ -115,7 +108,6 @@ fn image_metadata_to_robj(image: ImageMetadata) -> Robj {
     .into()
 }
 
-#[cfg(feature = "metadata")]
 fn structured_data_to_robj(data: StructuredData) -> Robj {
     list!(
         data_type = data.data_type.to_string(),
@@ -125,7 +117,6 @@ fn structured_data_to_robj(data: StructuredData) -> Robj {
     .into()
 }
 
-#[cfg(feature = "metadata")]
 fn option_to_robj(opt: Option<String>) -> Robj {
     match opt {
         Some(s) => s.into(),
@@ -133,7 +124,6 @@ fn option_to_robj(opt: Option<String>) -> Robj {
     }
 }
 
-#[cfg(feature = "metadata")]
 fn hashmap_to_robj(map: HashMap<String, String>) -> Robj {
     let names: Vec<&str> = map.keys().map(|k| k.as_str()).collect();
     let values: Vec<Robj> = map.values().map(|v| v.into_robj()).collect();
@@ -149,10 +139,7 @@ pub fn conversion_result_to_robj(result: ConversionResult) -> Robj {
         None => ().into(),
     };
 
-    #[cfg(feature = "metadata")]
     let metadata_robj = metadata_to_robj(result.metadata);
-    #[cfg(not(feature = "metadata"))]
-    let metadata_robj: Robj = ().into();
 
     let tables: Vec<Robj> = result
         .tables

@@ -22,8 +22,6 @@ use crate::{HtmlMetadata, MetadataConfig};
 ///
 /// * `html` — the HTML string to convert.
 /// * `options` — optional conversion options. Defaults to [`ConversionOptions::default`].
-///   When the `visitor` feature is enabled, a custom [`crate::visitor::HtmlVisitor`] can be
-///   attached via the `visitor` field on `ConversionOptions`.
 ///
 /// # Example
 ///
