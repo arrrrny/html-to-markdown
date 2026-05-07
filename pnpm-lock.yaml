@@ -38,8 +38,8 @@ importers:
   e2e/wasm:
     devDependencies:
       '@kreuzberg/html-to-markdown-wasm':
-        specifier: file:../../crates/html-to-markdown-wasm/dist
-        version: html-to-markdown-wasm@file:crates/html-to-markdown-wasm/dist
+        specifier: file:../../crates/html-to-markdown-wasm
+        version: link:../../crates/html-to-markdown-wasm
       rollup:
         specifier: ^4.53.3
         version: 4.60.3
@@ -990,9 +990,6 @@ packages:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
-
-  html-to-markdown-wasm@file:crates/html-to-markdown-wasm/dist:
-    resolution: {directory: crates/html-to-markdown-wasm/dist, type: directory}
 
   iconv-lite@0.7.2:
     resolution: {integrity: sha512-im9DjEDQ55s9fL4EYzOAv0yMqmMBSZp6G0VvFyTMPKWxiSBHUj9NW/qqLmXUwXrrM7AvqSlTCfvqRb0cM8yYqw==}
@@ -1990,8 +1987,6 @@ snapshots:
 
   fsevents@2.3.3:
     optional: true
-
-  html-to-markdown-wasm@file:crates/html-to-markdown-wasm/dist: {}
 
   iconv-lite@0.7.2:
     dependencies:
