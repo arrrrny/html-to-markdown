@@ -1179,7 +1179,7 @@ jobs:
           merge-multiple: true
 
       - name: Install dependencies
-        run: scripts/publish/csharp/restore.sh packages/csharp/HtmlToMarkdown.csproj
+        run: scripts/publish/csharp/restore.sh packages/csharp/HtmlToMarkdown/HtmlToMarkdown.csproj
         shell: bash
 
       - name: Pack NuGet package

@@ -1,35 +1,19 @@
+<!-- Outer csproj retained as IDE convenience for opening the whole tree as a project,
+     but it is NOT used for packing. The inner `HtmlToMarkdown/HtmlToMarkdown.csproj`
+     owns `<PackageId>KreuzbergDev.HtmlToMarkdown</PackageId>` and is the direct
+     `dotnet pack` target (see scripts/publish/csharp/pack.sh). -->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>HtmlToMarkdown</RootNamespace>
-    <PackageId>KreuzbergDev.HtmlToMarkdown</PackageId>
-    <Version>3.4.0-rc.35</Version>
-    <Description>High-performance HTML to Markdown converter</Description>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <RepositoryUrl>https://github.com/kreuzberg-dev/html-to-markdown</RepositoryUrl>
-    <Authors>Kreuzberg Team</Authors>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <IsPackable>false</IsPackable>
     <Nullable>enable</Nullable>
-    <!-- Bug 10: outer project is a NuGet packaging wrapper only; inner project owns compilation -->
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
   </PropertyGroup>
 
-  <!-- Bug 10: exclude the inner project sources to prevent duplicate definitions -->
   <ItemGroup>
     <Compile Remove="HtmlToMarkdown/**" />
   </ItemGroup>
 
-  <!-- PrivateAssets="all" prevents emitting a NuGet dependency on the inner project's
-       package id (`HtmlToMarkdown`, which is not a published package). The inner project
-       has IsPackable=false so its DLL flows up to this wrapper's normal lib/net10.0/
-       output directory through the standard ProjectReference build path. -->
   <ItemGroup>
     <ProjectReference Include="HtmlToMarkdown/HtmlToMarkdown.csproj" PrivateAssets="all" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="../../LICENSE" Pack="true" PackagePath="/" />
-    <None Include="runtimes/**" Pack="true" PackagePath="runtimes/" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

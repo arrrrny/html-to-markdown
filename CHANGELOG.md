@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.4.0-rc.36] - 2026-05-08
+
+### Fixed
+
+- **rc.35 NuGet ambiguous PackageId** — both the outer wrapper (`packages/csharp/HtmlToMarkdown.csproj`) and the new inner csproj declared `<PackageId>KreuzbergDev.HtmlToMarkdown</PackageId>`. `dotnet restore` against the outer triggered "Ambiguous project name 'KreuzbergDev.HtmlToMarkdown'", so `Build C# NuGet package` exited 1 and the publish was skipped. Stripped the outer csproj down to a non-packable IDE-convenience stub (no PackageId, no Version, no PackageLicenseFile, IsPackable=false). `publish.yaml` now passes the inner csproj to `restore.sh` so restore + pack target the same project.
+
+### Known issue
+
+- **rc.35 Ruby `x86_64-linux` gem flagged "invalid gem structure"** — root cause unidentified; the linux build job still succeeded and produced a `.gem` file, but rubygems.org rejected it on push. Other Ruby platforms (`ruby` source / `arm64-darwin` / `aarch64-linux`) published fine on rc.35. Will re-attempt on rc.36; if it recurs, will inspect the artifact directly.
+
 ## [3.4.0-rc.35] - 2026-05-08
 
 ### Fixed
