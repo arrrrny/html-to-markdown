@@ -56,6 +56,8 @@ jobs:
       target_sha: ${{ steps.meta.outputs.target_sha }}
       matrix_ref: ${{ steps.meta.outputs.matrix_ref }}
       is_tag: ${{ steps.meta.outputs.is_tag }}
+      npm_tag: ${{ steps.meta.outputs.npm_tag }}
+      is_prerelease: ${{ steps.meta.outputs.is_prerelease }}
       force_republish_java: ${{ steps.republish.outputs.force_republish_java }}
       force_republish_wasm: ${{ steps.republish.outputs.force_republish_wasm }}
     steps:
@@ -2008,6 +2010,7 @@ jobs:
         uses: kreuzberg-dev/actions/publish-npm@v1 # v1
         with:
           packages-dir: crates/html-to-markdown-node/npm
+          npm-tag: ${{ needs.prepare.outputs.npm_tag }}
           dry-run: ${{ needs.prepare.outputs.dry_run }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -2040,6 +2043,7 @@ jobs:
         uses: kreuzberg-dev/actions/publish-npm@v1 # v1
         with:
           package-dir: crates/html-to-markdown-node
+          npm-tag: ${{ needs.prepare.outputs.npm_tag }}
           dry-run: ${{ needs.prepare.outputs.dry_run }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -2069,6 +2073,7 @@ jobs:
         uses: kreuzberg-dev/actions/publish-npm@v1 # v1
         with:
           package-dir: packages/typescript
+          npm-tag: ${{ needs.prepare.outputs.npm_tag }}
           dry-run: ${{ needs.prepare.outputs.dry_run }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -2127,6 +2132,7 @@ jobs:
         uses: kreuzberg-dev/actions/publish-npm@v1 # v1
         with:
           package-dir: crates/html-to-markdown-wasm
+          npm-tag: ${{ needs.prepare.outputs.npm_tag }}
           dry-run: ${{ needs.prepare.outputs.dry_run }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -89,6 +89,17 @@ else
   is_tag="false"
 fi
 
+# Pre-release versions (rc, beta, alpha, dev) publish under the npm "next" dist-tag
+# so they don't override the stable release pointer. Detection mirrors PEP 440 +
+# semver pre-release markers: anything after a `-` or containing rc/beta/alpha/pre.
+if [[ "${version}" =~ -(rc|beta|alpha|pre|dev) ]]; then
+  npm_tag="next"
+  is_prerelease="true"
+else
+  npm_tag="latest"
+  is_prerelease="false"
+fi
+
 cat <<JSON >release-metadata.json
 {
   "tag": "${tag}",
@@ -98,7 +109,9 @@ cat <<JSON >release-metadata.json
   "target_sha": "${target_sha}",
   "matrix_ref": "${matrix_ref}",
   "dry_run": ${dry_run},
-  "is_tag": ${is_tag}
+  "is_tag": ${is_tag},
+  "npm_tag": "${npm_tag}",
+  "is_prerelease": ${is_prerelease}
 }
 JSON
 
@@ -111,4 +124,6 @@ JSON
   echo "target_sha=${target_sha}"
   echo "matrix_ref=${matrix_ref}"
   echo "is_tag=${is_tag}"
+  echo "npm_tag=${npm_tag}"
+  echo "is_prerelease=${is_prerelease}"
 } >>"${GITHUB_OUTPUT}"
