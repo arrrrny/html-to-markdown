@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.4.0-rc.38] - 2026-05-08
+
+### Fixed
+
+- **`build-native-gem.rb` rejected `x86_64-darwin`** — `VALID_PLATFORMS` did not list it, so the rc.37 macos-15-intel build aborted with "ERROR: Invalid platform 'x86_64-darwin'" right after the typo fix in `build-gem-unix.sh`. Added `x86_64-darwin` to `VALID_PLATFORMS`.
+
 ## [3.4.0-rc.37] - 2026-05-08
 
 ### Fixed
