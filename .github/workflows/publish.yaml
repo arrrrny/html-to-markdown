@@ -1276,7 +1276,13 @@ jobs:
         run: |
           alef publish build --lang ffi --target ${{ matrix.target }}
           mkdir -p dist/csharp-ffi/${{ matrix.rid }}/native
-          find target/release -maxdepth 1 -type f \( -name '*.so' -o -name '*.dylib' -o -name '*.dll' \) -name '*html_to_markdown_ffi*' -exec cp {} dist/csharp-ffi/${{ matrix.rid }}/native/ \;
+          # `alef publish build --target X` puts artifacts in target/<X>/release/.
+          # Also fall back to target/release/ in case alef built natively.
+          for src in "target/${{ matrix.target }}/release" "target/release"; do
+            [[ -d "$src" ]] || continue
+            find "$src" -maxdepth 1 -type f \( -name '*.so' -o -name '*.dylib' -o -name '*.dll' \) -name '*html_to_markdown_ffi*' -exec cp {} dist/csharp-ffi/${{ matrix.rid }}/native/ \;
+          done
+          ls -la dist/csharp-ffi/${{ matrix.rid }}/native/
 
       - name: Upload FFI artifact
         uses: actions/upload-artifact@v7 # v7
@@ -1284,6 +1290,7 @@ jobs:
           name: csharp-ffi-${{ matrix.rid }}
           path: dist/csharp-ffi
           retention-days: 14
+          if-no-files-found: error
 
   go-ffi:
     name: Build Go native FFI libraries (${{ matrix.platform }})
@@ -1921,7 +1928,12 @@ jobs:
         run: |
           alef publish build --lang ffi --target ${{ matrix.target }}
           mkdir -p dist/java-ffi/${{ matrix.platform }}/native
-          find target/release -maxdepth 1 -type f \( -name '*.so' -o -name '*.dylib' -o -name '*.dll' \) -name '*html_to_markdown_ffi*' -exec cp {} dist/java-ffi/${{ matrix.platform }}/native/ \;
+          # alef publish build --target X puts artifacts in target/<X>/release/
+          for src in "target/${{ matrix.target }}/release" "target/release"; do
+            [[ -d "$src" ]] || continue
+            find "$src" -maxdepth 1 -type f \( -name '*.so' -o -name '*.dylib' -o -name '*.dll' \) -name '*html_to_markdown_ffi*' -exec cp {} dist/java-ffi/${{ matrix.platform }}/native/ \;
+          done
+          ls -la dist/java-ffi/${{ matrix.platform }}/native/
 
       - name: Upload FFI artifact
         uses: actions/upload-artifact@v7 # v7
@@ -1929,6 +1941,7 @@ jobs:
           name: java-ffi-${{ matrix.platform }}
           path: dist/java-ffi
           retention-days: 14
+          if-no-files-found: error
 
   publish-maven:
     name: Publish Maven package

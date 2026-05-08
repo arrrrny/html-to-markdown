@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.4.0-rc.41] - 2026-05-08
+
+### Fixed
+
+- **C# NuGet & Java Maven packages shipped without native libs** — `csharp-ffi` and `java-ffi` build steps did `find target/release -maxdepth 1` to copy `*.dylib`/`*.so`/`*.dll`, but `alef publish build --target <X>` writes its output to `target/<X>/release/` (cargo's per-target output dir), not `target/release/`. The find matched zero files; `actions/upload-artifact` warned "No files were found" and produced empty artifacts. The downstream pack steps then bundled NO natives, so installs of rc.30 - rc.40 NuGet/Maven packages threw `dlopen: libhtml_to_markdown_ffi: no such file` at first call. Both jobs now look in `target/<target>/release` first (with `target/release` as fallback) and use `if-no-files-found: error` so an empty artifact fails fast.
+
 ## [3.4.0-rc.40] - 2026-05-08
 
 ### Fixed
