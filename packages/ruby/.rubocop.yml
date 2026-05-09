@@ -11,6 +11,7 @@ AllCops:
     - "tmp/**/*"
     - "lib/**/*.bundle"
     - "ext/**/*"
+    - "lib/html_to_markdown/native.rb"
 
 Style/FrozenStringLiteralComment:
   Enabled: true

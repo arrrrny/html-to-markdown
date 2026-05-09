@@ -116,13 +116,13 @@ repos:
         exclude: ^(e2e/|test_apps/)
       - id: rubocop
         files: ^packages/ruby/.*\.rb$
-        exclude: ^packages/ruby/ext/
+        exclude: ^packages/ruby/(ext/|lib/html_to_markdown/native\.rb$)
       - id: rubocop-lint
         files: ^packages/ruby/.*\.(rb|rbs)$
-        exclude: ^packages/ruby/ext/
+        exclude: ^packages/ruby/(ext/|lib/html_to_markdown/native\.rb$)
       - id: steep
         files: ^packages/ruby/.*\.(rb|rbs)$
-        exclude: ^packages/ruby/ext/
+        exclude: ^packages/ruby/(ext/|lib/html_to_markdown/native\.rb$)
       - id: dotnet-format
         files: ^packages/csharp/.*\.cs$
       - id: dotnet-format-check

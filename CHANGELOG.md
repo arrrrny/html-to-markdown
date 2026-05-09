@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.4.0-rc.44]
+
+### Fixed
+
+- **Elixir Hex package syntax error** — alef Rustler templates collapsed Elixir
+  pattern-match clauses onto single lines via stray `{%- raw %}` whitespace
+  strippers in `elixir_visitor_helper_functions.jinja` and
+  `elixir_visitor_call.jinja`. Fixed in alef v0.15.2; regenerated all bindings
+  against alef v0.15.4 (which also bundles php-backend `field_can_be_param`
+  fix and java-backend tag-stripping deserializer).
+- **html-to-markdown-node failed to compile after regen** — alef NAPI backend
+  emits `pub struct JsVisitResult(pub serde_json::Value)` for flat data enums,
+  which requires the `napi` crate's `serde-json` feature for
+  `FromNapiValue`/`ToNapiValue` impls on `serde_json::Value`. Added
+  `serde-json` to `crates/html-to-markdown-node/Cargo.toml` napi features.
+
+### Changed
+
+- Bumped alef pin from 0.15.1 to 0.15.4.
+
 ## [3.4.0-rc.43]
 
 ### Fixed
