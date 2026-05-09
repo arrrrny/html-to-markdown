@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.4.0-rc.45]
+
+### Fixed
+
+- **Publish Node TS wrapper failed on rc.44** — alef v0.15.4 NAPI backend
+  misclassified `VisitResult` (and any non-`#[serde(tag="...")]` data-variant
+  enum) as untagged, generating a `pub struct JsVisitResult(pub serde_json::Value)`
+  wrapper without `#[napi]`. napi-rs's auto-d.ts dropped the symbol, breaking
+  `packages/typescript/src/index.ts:42` which re-exports `JsVisitResult`. Fixed
+  in alef v0.15.5 by tracking `#[serde(untagged)]` explicitly on `EnumDef` and
+  switching all backends (NAPI, Go, C#, Java) to require it. Bindings now
+  emit `#[napi(string_enum)] pub enum JsVisitResult`.
+- **Homebrew bottle builds failed for all 4 platforms** — `compute_sha()` in
+  `scripts/publish/update-homebrew-formula.sh` printed progress text to stdout,
+  which got captured into the formula's `sha256` fields alongside the actual
+  hash. Bottles failed validation with "Formula reports different checksum".
+  Redirected progress output to stderr so only the SHA reaches the variable.
+
+### Changed
+
+- Bumped alef pin from 0.15.4 to 0.15.5.
+
 ## [3.4.0-rc.44]
 
 ### Fixed

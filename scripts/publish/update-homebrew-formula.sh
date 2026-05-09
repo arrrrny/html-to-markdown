@@ -36,8 +36,8 @@ trap 'rm -rf "$work_dir"' EXIT
 
 compute_sha() {
   local asset="$1"
-  echo "Downloading $asset..."
-  gh release download "$tag" -p "$asset" -D "$work_dir" --clobber
+  echo "Downloading $asset..." >&2
+  gh release download "$tag" -p "$asset" -D "$work_dir" --clobber >&2
   shasum -a 256 "$work_dir/$asset" | awk '{print $1}'
 }
 
