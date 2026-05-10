@@ -53,4 +53,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release upload "${{ github.event.release.tag_name }}" libhtml_to_markdown_ffi-* --clobber
+          gh release upload "${{ github.event.release.tag_name }}" libhtml_to_markdown_ffi-* --repo arrrrny/html-to-markdown --clobber
