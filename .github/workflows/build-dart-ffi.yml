@@ -32,7 +32,7 @@ jobs:
 
       - name: Rename for upload
         run: |
-          cp ../../../target/release/libhtml_to_markdown_ffi.${{ matrix.ext }} \
+          cp target/release/libhtml_to_markdown_ffi.${{ matrix.ext }} \
             libhtml_to_markdown_ffi-${{ matrix.target }}.${{ matrix.ext }}
 
       - uses: actions/upload-artifact@v4
