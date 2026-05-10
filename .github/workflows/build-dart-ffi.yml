@@ -29,28 +29,15 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Build
         run: cargo build --release -p html-to-markdown-ffi
-
       - name: Rename for upload
         run: |
           cp target/release/libhtml_to_markdown_ffi.${{ matrix.ext }} \
             libhtml_to_markdown_ffi-${{ matrix.target }}.${{ matrix.ext }}
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: libhtml_to_markdown_ffi-${{ matrix.target }}
-          path: libhtml_to_markdown_ffi-${{ matrix.target }}.${{ matrix.ext }}
-
-  attach:
-    if: github.event_name == 'release'
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: libhtml_to_markdown_ffi-*
-          merge-multiple: true
       - name: Upload to release
+        if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release upload "${{ github.event.release.tag_name }}" libhtml_to_markdown_ffi-* --repo arrrrny/html-to-markdown --clobber
+          gh release upload "${{ github.event.release.tag_name }}" \
+            libhtml_to_markdown_ffi-${{ matrix.target }}.${{ matrix.ext }} \
+            --repo arrrrny/html-to-markdown --clobber
