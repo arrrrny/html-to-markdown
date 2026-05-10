@@ -1,0 +1,52 @@
+name: Build Dart FFI Library
+
+on:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15-intel
+            target: x86_64-apple-darwin
+            ext: dylib
+          - runner: macos-latest
+            target: aarch64-apple-darwin
+            ext: dylib
+          - runner: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            ext: so
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo build --release -p html-to-markdown-ffi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: libhtml_to_markdown_ffi-${{ matrix.target }}
+          path: target/release/libhtml_to_markdown_ffi.${{ matrix.ext }}
+
+  attach:
+    if: github.event_name == 'release'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: libhtml_to_markdown_ffi-*
+          merge-multiple: true
+      - name: Upload to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for f in libhtml_to_markdown_ffi-*; do
+            gh release upload "${{ github.event.release.tag_name }}" "$f"
+          done
